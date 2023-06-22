@@ -64,14 +64,14 @@ def transfer(source, dest) -> str:
       os.remove(dir+renamed[1])
     return 'Ruta transferida y renombrada'
 
-def modify(path:str, body:str) -> str:
+def modify(path:str, body:str, type:str) -> str:
   path = config.basedir + path
+  if not os.path.exists(path):
+    return 'Ruta desconocida'
   try:
     file = open(path,'w')
-  except FileNotFoundError:
-    return 'Ruta desconocida'
   except IsADirectoryError:
-    return 'Ruta especificada es un directorio'
+    return 'Ruta especificada no puede ser un directorio'
   else:
     with file:
       file.write(body)
