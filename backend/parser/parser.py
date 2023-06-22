@@ -77,7 +77,7 @@ def p_command(p):
               | recovery
               | delete_all
               | open'''
-  return p[1]
+  p[0] = p[1]
 
 def p_create(p):
   'create : CREATE params'
@@ -117,7 +117,7 @@ def p_delete_all(p):
 
 def p_open(p):
   'open : OPEN params'
-  pass
+  p[0] = f'{p[1].lower()} {p[2]}'
 
 def p_params(p):
   'params : params param'
@@ -129,7 +129,7 @@ def p_simgle_param(p):
 
 def p_param(p):
   'param : "-" ID ARROW argument'
-  p[0] = {p[2].lower(): p[5]}
+  p[0] = {p[2].lower(): p[4]}
 
 def p_argument(p):
   '''argument : ID
