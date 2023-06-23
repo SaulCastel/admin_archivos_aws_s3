@@ -39,7 +39,7 @@ def localCopy(source, dest) -> str:
     return 'Destino debe ser un directorio'
   newDest = dest + splitPathEnding(source)[1]
   if os.path.exists(newDest):
-    return 'La ruta especificada ya existe'
+    return 'Destino ya contiene un archivo/directorio con el mismo nombre'
   try:
     if re.fullmatch(config.pathRegex, source):
       os.makedirs(newDest, exist_ok=True)

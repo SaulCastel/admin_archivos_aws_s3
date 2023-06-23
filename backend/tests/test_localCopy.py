@@ -13,7 +13,7 @@ class testLocalCopy(unittest.TestCase):
 
   def test_localCopy_dir(self):
     kwargs = {
-      'source': '/carpeta1/',
+      'source': '/carpeta1/existe/',
       'dest': '/carpeta2/'
     }
     result = localCopy(**kwargs)
@@ -25,15 +25,14 @@ class testLocalCopy(unittest.TestCase):
       'source': '/carpeta1/archivo1.txt',
       'dest': '/carpeta2/'
     }
-    print(splitPathEnding('/carpeta1/archivo1.txt'))
     result = localCopy(**kwargs)
     correct = 'La ruta especificada ya existe'
     return self.assertEqual(result, correct)
 
   def test_localCopy_dir_exists(self):
     kwargs = {
-      'source': '/carpeta1/',
-      'dest': '/carpeta2/'
+      'source': '/carpeta1/existe/',
+      'dest': '/'
     }
     result = localCopy(**kwargs)
     correct = 'La ruta especificada ya existe'
@@ -41,7 +40,7 @@ class testLocalCopy(unittest.TestCase):
 
   def test_localCopy_file_doesnt_exist(self):
     kwargs = {
-      'source': '/carpeta1/archivo3.txt',
+      'source': '/carpeta1/no_existe.txt',
       'dest': '/'
     }
     result = localCopy(**kwargs)
