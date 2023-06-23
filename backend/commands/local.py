@@ -30,20 +30,26 @@ def delete(path, name=None) -> str:
   except FileNotFoundError:
     return 'Ruta especificada no encontrada'
 
-def copy(source, dest, type_to, type_from) -> str:
+def localCopy(source, dest) -> str:
   source = config.basedir + source
   dest = config.basedir + dest
+  if not os.path.exists(source) or not os.path.exists(dest):
+    return 'Ruta especificada no existe'
+  if not re.fullmatch(config.pathRegex, dest):
+    return 'Destino debe ser un directorio'
+  newDest = dest + splitPathEnding(source)[1]
+  if os.path.exists(newDest):
+    return 'La ruta especificada ya existe'
   try:
-    if not re.fullmatch(config.pathRegex, source):
-      shutil.copy(source, dest)
+    if re.fullmatch(config.pathRegex, source):
+      os.makedirs(newDest, exist_ok=True)
+      shutil.copytree(source, newDest, dirs_exist_ok=True)
       return 'Ruta copiada exitosamente'
     else:
-      shutil.copytree(source, dest, dirs_exist_ok=True)
+      shutil.copy(source, dest)
       return 'Ruta copiada exitosamente'
-  except FileNotFoundError:
-    return 'Ruta desconocida'
   except shutil.SameFileError:
-    return 'No se puede usar el mismo directorio como destino'
+    return 'Destino no puede ser el mismo directorio'
 
 def transfer(source, dest, type_to, type_from) -> str:
   src = config.basedir + source
@@ -98,6 +104,14 @@ def rename(path:str, name:str) -> str:
     return 'Ruta desconocida'
   except FileExistsError:
     return 'Ruta especificada ya existe'
+
+def splitPathEnding(path:str) -> tuple:
+  'Devuelve la ruta del archivo y el nombre del archivo por separado'
+  pathSplit = path.rsplit('/', 1)
+  if '.' in pathSplit[1]:
+    return (pathSplit[0] + '/', pathSplit[1])
+  where = pathSplit[0].rsplit('/', 1)
+  return (where[0] + '/', where[1] + '/')
 
 def renamePath(path:str) -> tuple:
   pathSplit = path.strip('/').split('/')
