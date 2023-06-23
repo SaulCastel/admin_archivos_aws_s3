@@ -3,14 +3,20 @@ import shutil
 from . import config
 import re
 
-def create(path, name, body=None) -> str:
+def create(path, name, body, type) -> str:
   path = config.basedir + path
-  os.makedirs(path, exist_ok=True)
-  file = open(path + name, "w")
-  if body:
-    file.write(body)
-  file.close()
-  return 'Archivo creado exitosamente'
+  if os.path.isfile(path + name):
+    return 'Archivo ya existe'
+  elif not os.path.isdir(path):
+    os.makedirs(path)
+  try:
+    file = open(path + name, 'w')
+  except IsADirectoryError:
+    return 'Ruta especificada no puede ser un directorio'
+  else:
+    with file:
+      file.write(body)
+      return 'Archivo creado exitosamente'
 
 def delete(path, name=None) -> str:
   path = config.basedir + path
