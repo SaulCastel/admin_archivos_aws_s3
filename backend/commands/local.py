@@ -3,7 +3,7 @@ import shutil
 from . import config
 import re
 
-def create(path, name, body, type) -> str:
+def create(path, name, body) -> str:
   path = config.basedir + path
   if os.path.isfile(path + name):
     return 'Archivo ya existe'
@@ -30,7 +30,7 @@ def delete(path, name=None) -> str:
   except FileNotFoundError:
     return 'Ruta especificada no encontrada'
 
-def copy(source, dest) -> str:
+def copy(source, dest, type_to, type_from) -> str:
   source = config.basedir + source
   dest = config.basedir + dest
   try:
@@ -45,7 +45,7 @@ def copy(source, dest) -> str:
   except shutil.SameFileError:
     return 'No se puede usar el mismo directorio como destino'
 
-def transfer(source, dest) -> str:
+def transfer(source, dest, type_to, type_from) -> str:
   src = config.basedir + source
   dst = config.basedir + dest
   if not re.fullmatch(config.pathRegex, dest):
@@ -70,7 +70,7 @@ def transfer(source, dest) -> str:
       os.remove(dir+renamed[1])
     return 'Ruta transferida y renombrada'
 
-def modify(path:str, body:str, type:str) -> str:
+def modify(path:str, body:str) -> str:
   path = config.basedir + path
   if not os.path.exists(path):
     return 'Ruta desconocida'
