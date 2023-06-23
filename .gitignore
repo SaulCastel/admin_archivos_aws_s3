@@ -1,5 +1,6 @@
 __pycache__
 backend/parser/parser.out
 backend/parser/parsetab.py
+backend/tests/
 Archivos
 createArchivos.sh

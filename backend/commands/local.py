@@ -31,7 +31,9 @@ def delete(path, name=None) -> str:
     return 'Ruta especificada no encontrada'
 
 def delete_all() -> str:
-  return 'Falta implementar este comando'
+  shutil.rmtree(config.basedir + '/')
+  os.mkdir(config.basedir + '/')
+  return 'Directorio "Archivos" ha sido reiniciado'
 
 def localCopy(source, dest) -> str:
   source = config.basedir + source
