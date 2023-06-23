@@ -30,6 +30,9 @@ def delete(path, name=None) -> str:
   except FileNotFoundError:
     return 'Ruta especificada no encontrada'
 
+def delete_all() -> str:
+  return 'Falta implementar este comando'
+
 def localCopy(source, dest) -> str:
   source = config.basedir + source
   dest = config.basedir + dest

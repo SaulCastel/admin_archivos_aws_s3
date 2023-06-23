@@ -1,6 +1,7 @@
 from .ply.lex import lex, TOKEN
 from .ply.yacc import yacc
 from re import IGNORECASE
+import backend.commands.local as local
 
 reserved = {
   'create': 'CREATE',
@@ -66,6 +67,24 @@ def testLexer(data):
   for tok in lexer:
     print(tok)
 
+def exec_simple_type_command(local, cloud, p) -> str:
+  '''
+  Verifica que el parametro "type" exista y ejecuta
+  el comando correspondiente al tipo de operacion.
+  '''
+  try:
+    type = p[2].pop('type')
+  except KeyError:
+    return 'No se ha especificado "type"'
+  else:
+    try:
+      if type == 'server':
+        return local(**p[2])
+      else:
+        return cloud(**p[2])
+    except TypeError:
+      return 'Parametro(s) invalido(s)'
+
 def p_command(p):
   '''command  : create
               | delete
@@ -81,11 +100,11 @@ def p_command(p):
 
 def p_create(p):
   'create : CREATE params'
-  pass
+  p[0] = exec_simple_type_command(local.create, cloud.create, p)
 
 def p_delete(p):
   'delete : DELETE params'
-  pass 
+  p[0] = exec_simple_type_command(local.delete, cloud.delete, p)
   
 def p_copy(p):
   'copy : COPY params'
@@ -97,11 +116,11 @@ def p_transfer(p):
 
 def p_rename(p):
   'rename : RENAME params'
-  pass
+  p[0] = exec_simple_type_command(local.rename, cloud.rename, p)
 
 def p_modify(p):
   'modify : MODIFY params'
-  pass
+  p[0] = exec_simple_type_command(local.modify, cloud.modify, p)
 
 def p_backup(p):
   'backup : BACKUP params'
@@ -113,11 +132,12 @@ def p_recovery(p):
 
 def p_delete_all(p):
   'delete_all : DELETE_ALL params'
+  p[0] = exec_simple_type_command(local.delete_all, cloud.delete_all, p)
   pass
 
 def p_open(p):
   'open : OPEN params'
-  p[0] = f'{p[1].lower()} {p[2]}'
+  pass
 
 def p_params(p):
   'params : params param'
