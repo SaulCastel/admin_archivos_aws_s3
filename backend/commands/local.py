@@ -35,7 +35,7 @@ def delete_all() -> str:
   os.mkdir(config.basedir + '/')
   return 'Directorio "Archivos" ha sido reiniciado'
 
-def localCopy(source, dest) -> str:
+def local_copy(source, dest) -> str:
   source = config.basedir + source
   dest = config.basedir + dest
   if not os.path.exists(source) or not os.path.exists(dest):
@@ -56,7 +56,10 @@ def localCopy(source, dest) -> str:
   except shutil.SameFileError:
     return 'Destino no puede ser el mismo directorio'
 
-def localTransfer(source, dest) -> str:
+def copy_to_bucket(source, dest) -> str:
+  return 'Falta implementar este comando'
+
+def local_transfer(source, dest) -> str:
   source = config.basedir + source
   dest = config.basedir + dest
   if not os.path.exists(source):
@@ -82,6 +85,9 @@ def localTransfer(source, dest) -> str:
     shutil.copytree(source, newDest, dirs_exist_ok=True)
     shutil.rmtree(source)
   return 'Ruta renombrada y transferida exitosamente'
+
+def transfer_to_bucket(source, dest) -> str:
+  return 'Falta implementar este comando'
 
 def modify(path:str, body:str) -> str:
   path = config.basedir + path

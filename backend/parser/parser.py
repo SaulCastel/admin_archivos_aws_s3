@@ -21,13 +21,13 @@ tokens = ['ID','PATH','STRING','FILE', 'ARROW'] + list(reserved.values())
 
 literals = ['-']
 
-id = r'([0-9a-z_]+)'
+id = r'([0-9a-z_\[\]\(\)]+)'
 
 fileRegex = f'({id}[.]{id})'
 
 string = r'("[^"]*")'
 
-path = f'([/]({string}|{fileRegex}|{id}))+[/]?'
+path = f'([/]({string}|{fileRegex}|{id})?)+'
 
 t_ignore = ' \t'
 
@@ -58,7 +58,7 @@ def t_newline(t):
   t.lexer.lineno += 1
 
 def t_error(t):
-  localState['message'] = f'Error lexico en: <{t.value}>'
+  print(f'Error lexico en: <{t.value}>')
   t.lexer.skip(1)
 
 lexer = lex(reflags=IGNORECASE)
@@ -68,21 +68,42 @@ def testLexer(data):
   for tok in lexer:
     print(tok)
 
-def exec_simple_type_command(local, cloud, p) -> str:
+def exec_simple_type_command(local, cloud, params:dict) -> str:
   '''
   Verifica que el parametro "type" exista y ejecuta
   el comando correspondiente al tipo de operacion.
   '''
   try:
-    type = p[2].pop('type')
+    type = params.pop('type')
   except KeyError:
-    return 'No se ha especificado "type"'
+    return 'Especificacion invalida de tipo'
   else:
     try:
       if type == 'server':
-        return local(**p[2])
+        return local(**params)
       else:
-        return cloud(**p[2])
+        return cloud(**params)
+    except TypeError:
+      return 'Parametro(s) invalido(s)'
+
+def exec_double_type_command(commands:dict, params:dict) -> str:
+  try:
+    type_from = params.pop('type_from')
+    type_to = params.pop('type_to')
+    params['source'] = params.pop('from')
+    params['dest'] = params.pop('to')
+  except KeyError:
+    return 'Especificacion invalida de tipo'
+  else:
+    try:
+      if type_from == 'server' and type_to == 'server':
+        return commands['server-server'](**params)
+      elif type_from == 'server' and type_to == 'bucket':
+        return commands['server-bucket'](**params)
+      elif type_from == 'bucket' and type_to == 'server':
+        return commands['bucket-server'](**params)
+      else:
+        return commands['bucket-bucket'](**params)
     except TypeError:
       return 'Parametro(s) invalido(s)'
 
@@ -101,27 +122,39 @@ def p_command(p):
 
 def p_create(p):
   'create : CREATE params'
-  p[0] = exec_simple_type_command(local.create, cloud.create, p)
+  p[0] = exec_simple_type_command(local.create, cloud.create, p[2])
 
 def p_delete(p):
   'delete : DELETE params'
-  p[0] = exec_simple_type_command(local.delete, cloud.delete, p)
+  p[0] = exec_simple_type_command(local.delete, cloud.delete, p[2])
   
 def p_copy(p):
   'copy : COPY params'
-  pass
+  commands = {
+    'server-server': local.local_copy,
+    'server-bucket': local.copy_to_bucket,
+    'bucket-server': cloud.copy_to_server,
+    'bucket-bucket': cloud.cloud_copy
+  }
+  p[0] = exec_double_type_command(commands, p[2])
 
 def p_transfer(p):
   'transfer : TRANSFER params'
-  pass
+  commands = {
+    'server-server': local.local_transfer,
+    'server-bucket': local.transfer_to_bucket,
+    'bucket-server': cloud.transfer_to_server,
+    'bucket-bucket': cloud.cloud_transfer
+  }
+  p[0] = exec_double_type_command(commands, p[2])
 
 def p_rename(p):
   'rename : RENAME params'
-  p[0] = exec_simple_type_command(local.rename, cloud.rename, p)
+  p[0] = exec_simple_type_command(local.rename, cloud.rename, p[2])
 
 def p_modify(p):
   'modify : MODIFY params'
-  p[0] = exec_simple_type_command(local.modify, cloud.modify, p)
+  p[0] = exec_simple_type_command(local.modify, cloud.modify, p[2])
 
 def p_backup(p):
   'backup : BACKUP params'
@@ -133,7 +166,7 @@ def p_recovery(p):
 
 def p_delete_all(p):
   'delete_all : DELETE_ALL params'
-  p[0] = exec_simple_type_command(local.delete_all, cloud.delete_all, p)
+  p[0] = exec_simple_type_command(local.delete_all, cloud.delete_all, p[2])
   pass
 
 def p_open(p):
@@ -164,7 +197,8 @@ def p_argument_string(p):
 
 def p_error(p):
   if not p:
-    return 'Comando invalido'
-  return f'Error de sintaxis en: <{p.value}>'
+    print('Comando invalido')
+    return
+  print(f'Error de sintaxis en: <{p.value}>')
 
 parser = yacc()

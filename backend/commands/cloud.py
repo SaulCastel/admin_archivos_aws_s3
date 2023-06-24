@@ -12,3 +12,15 @@ def rename(path:str, name:str) -> str:
 
 def delete_all() -> str:
   return 'Falta implementar este comando'
+
+def cloud_copy(source, dest) -> str:
+  return 'Falta implementar este comando'
+
+def copy_to_server(source, dest) -> str:
+  return 'Falta implementar este comando'
+
+def cloud_transfer(source, dest) -> str:
+  return 'Falta implementar este comando'
+
+def transfer_to_server(source, dest) -> str:
+  return 'Falta implementar este comando'
