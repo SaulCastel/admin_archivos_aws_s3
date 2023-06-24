@@ -2,6 +2,7 @@ from .ply.lex import lex, TOKEN
 from .ply.yacc import yacc
 from re import IGNORECASE
 import backend.commands.local as local
+import backend.commands.cloud as cloud
 
 reserved = {
   'create': 'CREATE',
@@ -20,7 +21,7 @@ tokens = ['ID','PATH','STRING','FILE', 'ARROW'] + list(reserved.values())
 
 literals = ['-']
 
-id = r'([0-9a-z_]+)'
+id = r'([0-9a-z_-]+)'
 
 fileRegex = f'({id}[.]{id})'
 

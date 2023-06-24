@@ -4,3 +4,4 @@ backend/parser/parsetab.py
 backend/tests/
 Archivos
 createArchivos.sh
+venv/
