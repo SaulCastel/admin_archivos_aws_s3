@@ -21,7 +21,7 @@ tokens = ['ID','PATH','STRING','FILE', 'ARROW'] + list(reserved.values())
 
 literals = ['-']
 
-id = r'([0-9a-z_-]+)'
+id = r'([0-9a-z_]+)'
 
 fileRegex = f'({id}[.]{id})'
 
