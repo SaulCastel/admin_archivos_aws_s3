@@ -1,5 +1,12 @@
-def create(path, name, body) -> str:
-  return 'Falta implementar este comando'
+import boto3
+from . import config
+
+def create(path:str, name:str, body:str) -> str:
+  s3 = boto3.resource('s3')
+  key = config.bucket_basedir + path + name
+  object = s3.Object(config.bucket_name, key)
+  object.put(Body=body.encode())
+  return 'Archivo creado exitosamente'
 
 def delete(path, name=None) -> str:
   return 'Falta implementar este comando'
