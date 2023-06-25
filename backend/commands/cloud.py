@@ -23,8 +23,26 @@ def delete(path, name=None) -> str:
 def modify(path:str, body:str) -> str:
   return 'Falta implementar este comando'
 
+def renombrar(path:str, new_name:str) -> str:
+    old_name = s3.object(bucket_name, path)
+    new = s3.object(bucket_name, new_name)
+    new.copy_from(
+       CopySource=f'{bucket_name}/{old_name}'
+    )
+    old_name.delete()
+    
 def rename(path:str, name:str) -> str:
-  return 'Falta implementar este comando'
+  for obj in bucket.objects.all():
+    if path == obj.key:
+        separar = path.split('/')
+        separar.pop()
+        path="/".join(separar)
+        new_name = path + "/"+name
+        if new_name == obj.key:
+            return "El Archivo ya existe, no se puede utilizar este nombre"
+        else:
+            renombrar(bucket_name, path, new_name)
+            return 'Renombrado Exitosamente'
 
 def delete_all() -> str:
   return 'Falta implementar este comando'
