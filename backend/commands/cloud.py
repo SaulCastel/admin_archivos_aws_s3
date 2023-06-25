@@ -53,7 +53,10 @@ def rename(path:str, name:str) -> str:
             return 'Renombrado Exitosamente'
 
 def delete_all() -> str:
-  return 'Falta implementar este comando'
+  for obj in bucket.objects.all():
+    s3.Object(bucket_name, obj.key).delete()
+  return 'Bucket Vacio Completamente'
+  
 
 def cloud_copy(source, dest) -> str:
   return 'Falta implementar este comando'
