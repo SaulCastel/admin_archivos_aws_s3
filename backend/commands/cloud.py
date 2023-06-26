@@ -14,6 +14,13 @@ def delete(path, name=None) -> str:
     objeto = config.bucket_basedir+path+name
     if objeto == obj.key:
       s3.Object(bucket_name, objeto).delete()
+      separar = config.bucket_basedir+path.split('/')
+      separar.pop()
+      path="/".join(separar)
+      new_path = path + "/"+name
+      object = s3.Object(bucket_name, new_path)
+      body = ""
+      object.put(Body=body.encode())
       return 'Eliminado Exitosamente'
     else:
       return 'El archivo y/o Carpeta no Existe'
