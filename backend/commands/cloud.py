@@ -1,11 +1,12 @@
 import boto3
-from . import config
+import botocore.errorfactory
+from backend.commands.config import bucket_name, bucket_basedir
+
 s3 = boto3.resource('s3')
-bucket_name = config.bucket_name
 bucket = s3.Bucket(bucket_name)
 
 def create(path:str, name:str, body:str) -> str:
-  key = config.bucket_basedir+path+name
+  key = bucket_basedir+path+name
   for obj in bucket.objects.all():
     if key == obj.key:
       return 'El archivo ya existe'
@@ -15,10 +16,10 @@ def create(path:str, name:str, body:str) -> str:
 
 def delete(path, name=None) -> str:
   for obj in bucket.objects.all():
-    objeto = config.bucket_basedir+path+name
+    objeto = bucket_basedir+path+name
     if objeto == obj.key:
       s3.Object(bucket_name, objeto).delete()
-      separar = (config.bucket_basedir+path).split('/')
+      separar = (bucket_basedir+path).split('/')
       separar.pop()
       path="/".join(separar)
       new_path = path + "/"+name
@@ -30,7 +31,7 @@ def delete(path, name=None) -> str:
 
 def modify(path:str, body:str) -> str:
   for obj in bucket.objects.all():
-    objeto = config.bucket_basedir+path
+    objeto = bucket_basedir+path
     if objeto == obj.key:
       s3Object = s3.Object(bucket_name, key=(objeto))
       s3Object.put(Body=body.encode())
@@ -48,7 +49,7 @@ def renombrar(path:str, new_name:str) -> str:
 def rename(path:str, name:str) -> str:
   for obj in bucket.objects.all():
     if path == obj.key:
-      separar = (config.bucket_basedir+path).split('/')
+      separar = (bucket_basedir+path).split('/')
       separar.pop()
       path="/".join(separar)
       new_name = path + "/"+name
@@ -73,3 +74,11 @@ def cloud_transfer(source, dest) -> str:
 
 def transfer_to_server(source, dest) -> str:
   return 'Falta implementar este comando'
+
+def open_file(name) -> str:
+  try:
+    obj = s3.Object(bucket_name, key=name).get()
+    data = obj['Body'].read()
+    return data.decode()
+  except:
+    return 'Ruta desconocida'
