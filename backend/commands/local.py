@@ -1,6 +1,7 @@
 import os
 import shutil
 from . import config
+from . import cloud
 import re
 
 def create(path, name, body) -> str:
@@ -57,7 +58,14 @@ def local_copy(source, dest) -> str:
     return 'Destino no puede ser el mismo directorio'
 
 def copy_to_bucket(source, dest) -> str:
-  return 'Falta implementar este comando'
+  path_split = splitPathEnding(dest)
+  local_path = config.basedir + source
+  with open(local_path) as local_file:
+    body = local_file(local_path, 'r')
+    message = cloud.create(path=path_split[0], name=path_split[1], body=body)
+    if message == 'El archivo ya existe':
+      return 'Archivo con el mismo nombre ya existe en bucket'
+  return 'Archivo copiado exitosamente'
 
 def local_transfer(source, dest) -> str:
   source = config.basedir + source
