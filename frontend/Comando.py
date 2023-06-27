@@ -4,6 +4,9 @@ from tkinter import *
 from tkinter import ttk
 import tkinter.ttk as ttk
 from tkinter import filedialog
+import requests
+import json
+import config
 
 
 class Comandos:
@@ -21,7 +24,8 @@ class Comandos:
         self.button_cargar= tk.Button(master=self.frame_buttons, text= "Cargar", 
                                       font=("Century", 14),
                                       bg = "black",
-                                      fg = "white")
+                                      fg = "white",
+                                      command=self.exec_file)
         self.button_cargar.place(x=630,y=15)
 
         self.button_reporte= tk.Button(master=self.frame_buttons, text= "Reporte", 
@@ -39,10 +43,9 @@ class Comandos:
                                       fg = "white")
         self.label_consola.place(x=20,y=20)
 
-
         self.consol = tk.Text(master=self.frame_consola, width=60, font=("Consolas",13), fg="white", bg="black", insertbackground='white')
         self.consol.place(x=20,y=60)
-        
+        self.consol.bind('<Return>', self.get_command)
 
         self.frame_comandos = tk.Frame(master=self.frame,width=600,bg="midnight blue")
         self.frame_comandos.pack(fill=tk.BOTH,side = tk.RIGHT, expand=True)
@@ -53,10 +56,32 @@ class Comandos:
         self.label_comandos.place(x=20,y=20)
         self.comandos = tk.Text(master=self.frame_comandos, width=60, font=("Consolas",13), fg="white", bg="black", insertbackground='white')
         self.comandos.place(x=20,y=60)
-        
-        
 
+    def console_print(self, data:str):
+      self.comandos.insert('end', f'> {data}\n')
 
+    def exec_command(self, command:str):
+      data = {
+        'command': command
+      }
+      response = requests.post(config.server_url + '/interpret/', json=data)
+      message = json.loads(response.text)['message']
+      self.console_print(message)
+
+    def exec_file(self):
+      file_path = filedialog.askopenfilename()
+      if isinstance(file_path, str):
+        with open(file_path) as commands_file:
+          command = commands_file.readline().strip()
+          while command:
+            self.exec_command(command)
+            command = commands_file.readline().strip()
+
+    def get_command(self, arg):
+      lineStart = 'end-1c linestart'
+      lineEnd = 'end-1c lineend'
+      command = self.consol.get(lineStart, lineEnd).encode().decode('unicode-escape')
+      self.exec_command(command)
 
     def run(self):
         self.frame.mainloop()
