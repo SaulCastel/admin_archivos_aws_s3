@@ -1,6 +1,6 @@
 import os
 import shutil
-from . import config
+import config
 from . import cloud
 import re
 

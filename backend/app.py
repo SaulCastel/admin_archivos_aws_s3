@@ -1,4 +1,3 @@
-from typing import Annotated
 from fastapi import FastAPI
 from pydantic import BaseModel
 from backend.parser.parser import parser

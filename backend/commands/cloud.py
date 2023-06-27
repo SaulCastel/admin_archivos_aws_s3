@@ -2,7 +2,7 @@ import io
 import os
 import boto3
 import botocore.errorfactory
-from backend.commands.config import bucket_name, bucket_basedir, dir
+from config import bucket_name, bucket_basedir, dir
 
 s3 = boto3.resource('s3')
 bucket = s3.Bucket(bucket_name)
