@@ -1,7 +1,8 @@
 import io
+import os
 import boto3
 import botocore.errorfactory
-from backend.commands.config import bucket_name, bucket_basedir
+from backend.commands.config import bucket_name, bucket_basedir, dir
 
 s3 = boto3.resource('s3')
 bucket = s3.Bucket(bucket_name)
@@ -133,8 +134,19 @@ def cloud_copy(source, dest) -> str:
   return 'El archivo y/o Carpeta no Existe'
 
 def copy_to_server(source, dest) -> str:
-  
-  return 'Falta implementar este comando'
+  source1 = bucket_basedir+source
+  #Para Carpetas y archivos
+  for obj in bucket.objects.all():
+    if (source1 in obj.key) or (source1 == obj.key):
+        for obj in bucket.objects.filter(Prefix = source1):
+            if not os.path.exists(os.path.expanduser(dir+dest)):
+                print(os.path.expanduser(obj.key))
+                os.makedirs(os.path.expanduser(obj.key))
+            bucket.download_file(obj.key, obj.key)
+            return 'Copia Realizada con Exito'
+    else:
+       return "No se puede realizar la copia, la carpeta y/o archivo no existe"
+    
 
 def cloud_transfer(source, dest) -> str:
   return 'Falta implementar este comando'
