@@ -1,6 +1,7 @@
 import os
 import shutil
 import requests
+import boto3
 import config
 from . import cloud
 import re
@@ -127,23 +128,41 @@ def rename(path:str, name:str) -> str:
   except FileExistsError:
     return 'Ruta especificada ya existe'
 
-def backup_server_files(type_to:str, name, ip=config.ip, port=config.port) -> str:
+def backup_server_files(type_to:str, name, ip=None, port=None) -> str:
+  if not(ip and port):
+    return backup_to_own_bucket(name)
+  if (ip and not port) or (port and not ip):
+    raise TypeError
   for dir in os.walk(config.basedir):
     path = dir[0].removeprefix(config.basedir)
     if len(dir[2]) == 0:
-      data = {'type': 'dir', 'path': '/'+name+path}
+      data = {'type': 'dir', 'path': f'/{name}{path}/'}
       requests.post(f'http://{ip}:{port}/backup/{type_to}/', json=data)
       continue
     for file in dir[2]:
       content = open(os.path.join(dir[0],file))
       data = {
         'type': 'file',
-        'path': '/'+name+path,
+        'path': f'/{name}{path}/',
         'name': file,
         'body': content.read()
       }
       content.close()
       requests.post(f'http://{ip}:{port}/backup/{type_to}/', json=data)
+  return 'Backup realizado'
+
+def backup_to_own_bucket(name:str) -> str:
+  s3 = boto3.resource('s3')
+  for dir in os.walk(config.basedir):
+    path = dir[0].removeprefix(config.basedir)
+    if len(dir[2]) == 0:
+      obj = s3.Object(config.bucket_name, f'{name}{path}/')
+      obj.put(Body=b'')
+      continue
+    for file in dir[2]:
+      obj = s3.Object(config.bucket_name, f'{name}{path}/{file}')
+      with open(os.path.join(dir[0],file), 'rb') as content:
+        obj.put(Body=content)
   return 'Backup realizado'
 
 def splitPathEnding(path:str) -> list:
