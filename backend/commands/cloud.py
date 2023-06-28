@@ -70,69 +70,41 @@ def delete_all() -> str:
   object.put(Body=''.encode())
   return 'Bucket Vacio Completamente'
 
-def copiar(path:str, new_name:str) -> str:
-  old_name = s3.object(bucket_name, path)
-  new = s3.object(bucket_name, new_name)
-  new.copy_from(
-      CopySource=f'{bucket_name}/{old_name}'
-  )
   
 def cloud_copy(source, dest) -> str:
   source1 = bucket_basedir+source
   dest1 = bucket_basedir+dest
-  #Copy Archivos
-  for obj in bucket.objects.all():
-    if source1 == obj.key:
-        separar = source1.split('/')
-        if separar[len(separar)-1].endswith(".txt")==True:
-            destino = dest1 + separar[len(separar)-1]
-            for obj1 in bucket.objects.all():
-                if destino == obj1.key:
-                    s = destino.split("/")
-                    r=s[len(s)-1].split(".")
-                    cambio = r[0]+ "(copy)."+r[1]
-                    destinoFinal = dest1 + cambio
-                    copiar(bucket_name, source1, destinoFinal)
-                    print("El Archivo ya existe, Se añadio copy al nombre")
-                    break
-                else:
-                    copiar(bucket_name, source1, destino)
-    #Copy Carpetas
-    else:
-        buscar = source1.split("/")
-        buscar.pop()
-        if source1 in obj.key:
-            separar2 = obj.key.split("/") #Carpeta de donde se encuentra en el bucket
-            separar = dest1.split("/") #Carpeta Destino
-            separar.pop()
-            #Obteniendo para crear
-            if buscar[len(buscar)-1] in dest1:
-                print("La carpeta ya Existe")
-            
-            else:
-                for y in range(0,len(separar2)):
-                    if buscar[len(buscar)-1] == separar2[y]:
-                        new_list = separar2[y:]
-                        separar.extend(new_list)
-                        unir = "/".join(separar)
-                        s3_object = s3.Object(bucket_name, obj.key)
-                        with io.BytesIO() as f:
-                            s3_object.download_fileobj(f)
-                            f.seek(0)
-                            Body = f.read()
-                            object = s3.Object(bucket_name, unir)
-                            object.put(Body=Body)
-                            for obj2 in bucket.objects.all(): 
-                               if unir == obj2.key:
-                                  u = unir.split("/")
-                                  p = u[len(s)-1].split(".")
-                                  renombre = p[0]+ "(copy)."+p[1]
-                                  u[len(s)-1] = renombre
-                                  unir = "/".join(u)
-                                  copiar(bucket_name, obj.key, unir)
-                               else:
-                                  copiar(bucket_name, obj.key, unir)                              
-  return 'El archivo y/o Carpeta no Existe'
+  if source1.endswith(".txt"):
+    obtener = source1.split("/")
+    name = dest1+obtener[len(obtener)-1]
+    try:
+      objeto_origen = {
+        'Bucket': bucket_name,
+        'Key': source
+      }
+        
+      objeto_destino = {
+        'Bucket': bucket_name,
+        'Key': name
+      }
+
+      s3.Object(objeto_destino['Bucket'], objeto_destino['Key']).copy(objeto_origen)
+      return ("Archivo Copiado exitosamente")
+    except Exception as e:
+            return("Error al copiar el archivo:", str(e))
+  else:
+        obtener = source.split("/")
+        obtener.pop()
+        name = dest+obtener[len(obtener)-1]+"/"
+        try:
+            for objeto in bucket.objects.filter(Prefix=source):
+                destino_objeto = objeto.key.replace(source, name, 1)
+                bucket.Object(destino_objeto).copy_from(CopySource={'Bucket': bucket_name, 'Key': objeto.key})
+                print(f"Objeto copiado exitosamente: {destino_objeto}")
+            return("Carpeta Copiada exitosamente")
+        except Exception as e:
+            return ("Error al copiar la carpeta:", str(e))                       
+  
 
 def copy_to_server(source, dest) -> str:
   source1 = bucket_basedir+source
@@ -150,7 +122,48 @@ def copy_to_server(source, dest) -> str:
     
 
 def cloud_transfer(source, dest) -> str:
-  return 'Falta implementar este comando'
+  source1 = bucket_basedir+source
+  dest1 = bucket_basedir+dest
+  if source1.endswith(".txt"):
+    obtener = source1.split("/")
+    name = dest1+obtener[len(obtener)-1]
+    reponer = "/".join(obtener[:-1]) + "/"
+    print(reponer)
+    try:
+      objeto_origen = {
+        'Bucket': bucket_name,
+        'Key': source
+      }
+      objeto_destino = {
+        'Bucket': bucket_name,
+        'Key': name
+      }
+      s3.Object(objeto_destino['Bucket'], objeto_destino['Key']).copy(objeto_origen)
+      print("Archivo Transferido exitosamente")
+      eliminar =s3.Object(objeto_origen['Bucket'],objeto_origen['Key'])
+      eliminar.delete()
+      create = s3.Object(bucket_name, reponer)
+      create.put(Body="".encode())
+    except Exception as e:
+      print("Error al copiar el archivo:", str(e))
+  else:
+      obtener = source.split("/")
+      obtener.pop()
+      name = dest+obtener[len(obtener)-1]+"/"
+      reponer = "/".join(obtener[:-1]) + "/"
+      print(reponer)
+      try:
+        for objeto in bucket.objects.filter(Prefix=source):
+          destino_objeto = objeto.key.replace(source, name, 1)
+          bucket.Object(destino_objeto).copy_from(CopySource={'Bucket': bucket_name, 'Key': objeto.key})
+          eliminar =s3.Object(bucket_name,objeto.key)
+          eliminar.delete()
+          print(f"Objeto Transferido exitosamente: {destino_objeto}")
+        print("Carpeta Transferida exitosamente")
+        create = s3.Object(bucket_name, reponer)
+        create.put(Body="".encode())
+      except Exception as e:
+        print("Error al copiar la carpeta:", str(e))
 
 def transfer_to_server(source, dest) -> str:
   return 'Falta implementar este comando'
