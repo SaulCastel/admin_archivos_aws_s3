@@ -2,6 +2,7 @@ import os
 import shutil
 import requests
 import boto3
+import json
 import config
 from . import cloud
 import re
@@ -23,7 +24,15 @@ def create(path, name, body) -> str:
 
 def open_file(name, ip=None, port=None) -> str:
   if ip and port:
-    pass
+    data = {'name': name}
+    r = requests.post(f'http://{ip}:{port}/backup/server/', json=data)
+    return json.loads(r.text)['content']
+  try:
+    path = config.basedir + name
+    with open(path) as file:
+      return file.read()
+  except FileNotFoundError:
+    return 'El archivo solicitado no existe'
 
 def delete(path, name=None) -> str:
   path = config.basedir + path
