@@ -50,23 +50,24 @@ def renombrar(path:str, new_name:str) -> str:
 
 def rename(path:str, name:str) -> str:
   path1 = bucket_basedir+path
+  new_name = ''
   for obj in bucket.objects.all():
     if path1 == obj.key:
       separar = (path1).split('/')
       separar.pop()
       path="/".join(separar)
       new_name = path + "/"+name
-      if new_name == obj.key:
-          return "El Archivo ya existe, no se puede utilizar este nombre"
+      break
   renombrar(bucket_name, path, new_name)
   return 'Renombrado Exitosamente'
 
 def delete_all() -> str:
   for obj in bucket.objects.all():
+    if obj.key == 'miausuarios.txt':
+      continue
     s3.Object(bucket_name, obj.key).delete()
-  object = s3.Object(bucket_name, 'Archivos/')
-  body = ""
-  object.put(Body=body.encode())
+  object = s3.Object(bucket_name, bucket_basedir+'/vacio.txt')
+  object.put(Body=''.encode())
   return 'Bucket Vacio Completamente'
 
 def copiar(path:str, new_name:str) -> str:

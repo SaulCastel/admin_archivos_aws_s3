@@ -58,7 +58,7 @@ class Comandos:
         self.comandos.place(x=20,y=60)
 
     def console_print(self, data:str):
-      self.comandos.insert('end', f'> {data}\n')
+      self.comandos.insert('end', data+'\n')
 
     def exec_command(self, command:str):
       data = {
@@ -66,7 +66,7 @@ class Comandos:
       }
       response = requests.post(config.server_url + '/interpret/', json=data)
       message = json.loads(response.text)['message']
-      self.console_print(message)
+      self.console_print('> '+message)
 
     def exec_file(self):
       file_path = filedialog.askopenfilename()
@@ -74,6 +74,7 @@ class Comandos:
         with open(file_path) as commands_file:
           command = commands_file.readline().strip()
           while command:
+            self.console_print('$ '+command)
             self.exec_command(command)
             command = commands_file.readline().strip()
 
