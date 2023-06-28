@@ -1,5 +1,6 @@
 import os
 import shutil
+import requests
 import config
 from . import cloud
 import re
@@ -125,6 +126,25 @@ def rename(path:str, name:str) -> str:
     return 'Ruta desconocida'
   except FileExistsError:
     return 'Ruta especificada ya existe'
+
+def backup_server_files(type_to:str, name, ip=config.ip, port=config.port) -> str:
+  for dir in os.walk(config.basedir):
+    path = dir[0].removeprefix(config.basedir)
+    if len(dir[2]) == 0:
+      data = {'type': 'dir', 'path': '/'+name+path}
+      requests.post(f'http://{ip}:{port}/backup/{type_to}/', json=data)
+      continue
+    for file in dir[2]:
+      content = open(os.path.join(dir[0],file))
+      data = {
+        'type': 'file',
+        'path': '/'+name+path,
+        'name': file,
+        'body': content.read()
+      }
+      content.close()
+      requests.post(f'http://{ip}:{port}/backup/{type_to}/', json=data)
+  return 'Backup realizado'
 
 def splitPathEnding(path:str) -> list:
   'Devuelve la ruta del archivo y el nombre del archivo por separado'

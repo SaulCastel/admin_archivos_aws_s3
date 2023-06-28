@@ -155,6 +155,9 @@ def cloud_transfer(source, dest) -> str:
 def transfer_to_server(source, dest) -> str:
   return 'Falta implementar este comando'
 
+def backup_bucket_files(type_to:str, name, ip, port) -> str:
+  return 'Falta implementar este comando'
+
 def open_file(name) -> str:
   try:
     obj = s3.Object(bucket_name, key=name).get()

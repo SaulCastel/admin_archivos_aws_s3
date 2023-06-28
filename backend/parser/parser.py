@@ -17,7 +17,7 @@ reserved = {
   'open': 'OPEN'
 }
 
-tokens = ['ID','PATH','STRING','FILE', 'ARROW'] + list(reserved.values())
+tokens = ['ID','PATH','STRING','FILE', 'ARROW', 'IP'] + list(reserved.values())
 
 literals = ['-']
 
@@ -34,6 +34,10 @@ t_ignore = ' \t'
 @TOKEN(path)
 def t_PATH(t):
   t.value = t.value.replace('"','')
+  return t
+
+def t_IP(t):
+  '([0-9]{0,3}\.)+[0-9]{0,3}'
   return t
 
 @TOKEN(fileRegex)
@@ -107,6 +111,31 @@ def exec_double_type_command(commands:dict, params:dict) -> str:
     except TypeError:
       return 'Parametro(s) invalido(s)'
 
+def exec_api_command(commands:dict, params) -> str:
+  try:
+    type_from = params.pop('type_from')
+    type_to = params.pop('type_to')
+  except KeyError:
+    return 'Especificacion invalida de tipo'
+  else:
+    ip = params.get('ip')
+    port = params.get('port')
+    try:
+      if type_from == 'server' and type_to == 'server':
+        if not(ip and port):
+          return 'Se necesita ip y puerto para operacion con tipos iguales'
+        return commands['server-server']('server', **params)
+      if type_from == 'bucket' and type_to == 'bucket':
+        if not(ip and port):
+          return 'Se necesita ip y puerto para operacion con tipos iguales'
+        return commands['bucket-bucket']('bucket', **params)
+      elif type_from == 'server' and type_to == 'bucket':
+        return commands['server-bucket']('bucket',**params)
+      else:
+        return commands['bucket-server']('server', **params)
+    except TypeError:
+      return 'Parametro(s) invalido(s)'
+
 def p_command(p):
   '''command  : create
               | delete
@@ -158,7 +187,13 @@ def p_modify(p):
 
 def p_backup(p):
   'backup : BACKUP params'
-  pass
+  commands = {
+    'server-server': local.backup_server_files,
+    'server-bucket': local.backup_server_files,
+    'bucket-server': cloud.backup_bucket_files,
+    'bucket-bucket': cloud.backup_bucket_files
+  }
+  p[0] = exec_api_command(commands, p[2])
 
 def p_recovery(p):
   'recovery : RECOVERY params'
@@ -188,7 +223,8 @@ def p_param(p):
 def p_argument(p):
   '''argument : ID
               | PATH
-              | FILE'''
+              | FILE
+              | IP'''
   p[0] = p[1]
 
 def p_argument_string(p):
