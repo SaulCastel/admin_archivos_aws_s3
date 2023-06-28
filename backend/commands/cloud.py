@@ -172,9 +172,9 @@ def transfer_to_server(source, dest) -> str:
 def backup_bucket_files(type_to:str, name, ip, port) -> str:
   for objeto in bucket.objects.filter(Prefix='Archivos/'):
     for objeto1 in bucket.objects.all():
-      if objeto.key.endswith(".txt"):
-        separar = objeto.key.split("/")
-        separar[0] = "Backup_G19"
+      if objeto1.key.endswith(".txt"):
+        separar = objeto1.key.split("/")
+        separar[0] = name
         for x in range(0,len(separar)):
           s3_object = s3.Object(bucket_name, objeto.key)
           with io.BytesIO() as f:
