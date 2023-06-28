@@ -169,7 +169,23 @@ def transfer_to_server(source, dest) -> str:
   return 'Falta implementar este comando'
 
 def backup_bucket_files(type_to:str, name, ip, port) -> str:
-  return 'Falta implementar este comando'
+  for objeto in bucket.objects.all():
+    if objeto.key.endswith(".txt"):
+      separar = objeto.key.split("/")
+      separar[0] = "Backup_G19"
+      for x in range(0,len(separar)):
+        s3_object = s3.Object(bucket_name, objeto.key)
+        with io.BytesIO() as f:
+            s3_object.download_fileobj(f)
+            f.seek(0)
+            data = {
+              'type' : 'file',
+              'path' : '/'+"/".join(separar[:-1])+"/",
+              'name' : separar[len(separar)-1],
+              'body' : f.read().decode()
+            }
+      requests.post(f'http://{ip}:{port}/backup/{type_to}/', json = data)
+      return 'Backup de Bucket Realizado'
 
 def open_file(name) -> str:
   try:
