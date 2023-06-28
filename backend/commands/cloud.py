@@ -3,7 +3,7 @@ import os
 from urllib import request
 import boto3
 import botocore.errorfactory
-from config import bucket_name, bucket_basedir, dir
+from config import bucket_name, bucket_basedir, dir, basedir
 
 s3 = boto3.resource('s3')
 bucket = s3.Bucket(bucket_name)
@@ -105,22 +105,25 @@ def cloud_copy(source, dest) -> str:
             return("Carpeta Copiada exitosamente")
         except Exception as e:
             return ("Error al copiar la carpeta:", str(e))                       
-  
 
 def copy_to_server(source, dest) -> str:
-  source1 = bucket_basedir+source
-  #Para Carpetas y archivos
-  for obj in bucket.objects.all():
-    if (source1 in obj.key) or (source1 == obj.key):
-        for obj in bucket.objects.filter(Prefix = source1):
-            if not os.path.exists(os.path.expanduser(dir+dest)):
-                print(os.path.expanduser(obj.key))
-                os.makedirs(os.path.expanduser(obj.key))
-            bucket.download_file(obj.key, obj.key)
-            return 'Copia Realizada con Exito'
+  '''
+  source = bucket_basedir+source
+  dest = basedir + dest   
+  if source.endswith('.txt'):
+    obj = s3.Object(bucket_name, source)
+    name = obj.key.removeprefix(source)
+    bucket.download_file(obj.key, dest+name)
+    return 'Copia realizada con exito'
+  for obj in bucket.objects.filter(Prefix=source):
+    name = obj.key.removeprefix(source)
+    if name.endswith('.txt'):
+      bucket.download_file(obj.key, dest+name)
     else:
-       return "No se puede realizar la copia, la carpeta y/o archivo no existe"
-    
+      os.makedirs(dest+name, exist_ok=True)
+  return "Copia realizada con exito"
+  '''
+  return 'Falta implementar este comando'
 
 def cloud_transfer(source, dest) -> str:
   source1 = bucket_basedir+source
@@ -169,25 +172,35 @@ def cloud_transfer(source, dest) -> str:
 def transfer_to_server(source, dest) -> str:
   return 'Falta implementar este comando'
 
-def backup_bucket_files(type_to:str, name, ip, port) -> str:
+def backup_bucket_files(type_to:str, name, ip=None, port=None) -> str:
+  if not(ip and port):
+    return backup_to_own_server(name)
   for objeto in bucket.objects.filter(Prefix='Archivos/'):
-    for objeto1 in bucket.objects.all():
-      if objeto1.key.endswith(".txt"):
-        separar = objeto1.key.split("/")
-        separar[0] = name
-        for x in range(0,len(separar)):
-          s3_object = s3.Object(bucket_name, objeto.key)
-          with io.BytesIO() as f:
-            s3_object.download_fileobj(f)
-            f.seek(0)
-            data = {
-              'type' : 'file',
-              'path' : '/'+"/".join(separar[:-1])+"/",
-              'name' : separar[len(separar)-1],
-              'body' : f.read().decode()
-            }
-        request.post(f'http://{ip}:{port}/backup/{type_to}/', json = data)
+    data = {}
+    if objeto.key.endswith(".txt"):
+      separar = objeto.key.split("/")
+      separar[0] = name
+      s3_object = s3.Object(bucket_name, objeto.key)
+      with io.BytesIO() as f:
+        s3_object.download_fileobj(f)
+        f.seek(0)
+        data = {
+          'type' : 'file',
+          'path' : '/'+"/".join(separar[:-1])+"/",
+          'name' : separar[len(separar)-1],
+          'body' : f.read().decode()
+        }
+    else:
+      path = objeto.key.removeprefix('Archivos')
+      data = {
+        'type': 'dir',
+        'path': f'{name}{path}'
+      }
+    request.post(f'http://{ip}:{port}/backup/{type_to}/', json = data)
   return 'Backup de Bucket Realizado'
+
+def backup_to_own_server(name:str) -> str:
+  return 'Falta implementar este comando'
 
 def open_file(name) -> str:
   try:
