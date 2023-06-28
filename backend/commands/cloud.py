@@ -1,5 +1,6 @@
 import io
 import os
+from urllib import request
 import boto3
 import botocore.errorfactory
 from config import bucket_name, bucket_basedir, dir
@@ -169,13 +170,14 @@ def transfer_to_server(source, dest) -> str:
   return 'Falta implementar este comando'
 
 def backup_bucket_files(type_to:str, name, ip, port) -> str:
-  for objeto in bucket.objects.all():
-    if objeto.key.endswith(".txt"):
-      separar = objeto.key.split("/")
-      separar[0] = "Backup_G19"
-      for x in range(0,len(separar)):
-        s3_object = s3.Object(bucket_name, objeto.key)
-        with io.BytesIO() as f:
+  for objeto in bucket.objects.filter(Prefix='Archivos/'):
+    for objeto1 in bucket.objects.all():
+      if objeto.key.endswith(".txt"):
+        separar = objeto.key.split("/")
+        separar[0] = "Backup_G19"
+        for x in range(0,len(separar)):
+          s3_object = s3.Object(bucket_name, objeto.key)
+          with io.BytesIO() as f:
             s3_object.download_fileobj(f)
             f.seek(0)
             data = {
@@ -184,8 +186,8 @@ def backup_bucket_files(type_to:str, name, ip, port) -> str:
               'name' : separar[len(separar)-1],
               'body' : f.read().decode()
             }
-      requests.post(f'http://{ip}:{port}/backup/{type_to}/', json = data)
-      return 'Backup de Bucket Realizado'
+        request.post(f'http://{ip}:{port}/backup/{type_to}/', json = data)
+  return 'Backup de Bucket Realizado'
 
 def open_file(name) -> str:
   try:
