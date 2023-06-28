@@ -1,10 +1,8 @@
 from os import makedirs, path
 import frontend.AES_ECB as AES
 import frontend.Login
-import frontend.Comando
 from backend.commands.cloud import open_file
 
-'''
 users = {}
 data = open_file('miausuarios.txt')
 if data == 'Ruta desconocida':
@@ -21,6 +19,3 @@ else:
     users[user] = password
   print(users)
   frontend.Login.Login(users)
-'''
-app = frontend.Comando.Comandos()
-app.run()

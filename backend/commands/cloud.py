@@ -2,7 +2,8 @@ import io
 import os
 from urllib import request
 import boto3
-import botocore.errorfactory
+import requests
+import json
 from config import bucket_name, bucket_basedir, dir, basedir
 
 s3 = boto3.resource('s3')
@@ -196,16 +197,19 @@ def backup_bucket_files(type_to:str, name, ip=None, port=None) -> str:
         'type': 'dir',
         'path': f'{name}{path}'
       }
-    request.post(f'http://{ip}:{port}/backup/{type_to}/', json = data)
+    requests.post(f'http://{ip}:{port}/backup/{type_to}/', json = data)
   return 'Backup de Bucket Realizado'
 
 def backup_to_own_server(name:str) -> str:
   return 'Falta implementar este comando'
 
-def open_file(name) -> str:
-  try:
-    obj = s3.Object(bucket_name, key=name).get()
-    data = obj['Body'].read()
-    return data.decode()
-  except:
-    return 'Ruta desconocida'
+def open_file(name, ip=None, port=None) -> str:
+  if ip and port:
+    data = {'name': name}
+    r = requests.post(f'http://{ip}:{port}/open/bucket/', json=data)
+    return json.loads(r.text)['content']
+  for obj in bucket.objects.all():
+    if obj.key == name:
+      data = obj.get()['Body'].read()
+      return data.decode()
+  return 'Ruta desconocida'

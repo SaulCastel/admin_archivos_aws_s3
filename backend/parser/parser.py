@@ -202,11 +202,10 @@ def p_recovery(p):
 def p_delete_all(p):
   'delete_all : DELETE_ALL params'
   p[0] = exec_simple_type_command(local.delete_all, cloud.delete_all, p[2])
-  pass
 
 def p_open(p):
   'open : OPEN params'
-  pass
+  p[0] = exec_simple_type_command(local.open_file, cloud.open_file, p[2])
 
 def p_params(p):
   'params : params param'

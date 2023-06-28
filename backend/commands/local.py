@@ -21,6 +21,10 @@ def create(path, name, body) -> str:
       file.write(body)
       return 'Archivo creado exitosamente'
 
+def open_file(name, ip=None, port=None) -> str:
+  if ip and port:
+    pass
+
 def delete(path, name=None) -> str:
   path = config.basedir + path
   try:

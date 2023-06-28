@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from os import makedirs
 from backend.parser.parser import parser
-from backend.commands.local import create
+from backend.commands import cloud, local
 from config import files_dir
 
 app = FastAPI()
@@ -15,12 +15,24 @@ class backup_body(BaseModel):
   name: str | None
   body: str | None
 
+class open_body(BaseModel):
+  name: str
+
 @app.post('/interpret/')
 async def interpret(body: parser_call_body):
   message = parser.parse(body.command.strip())
   if message == None:
     return {'message': 'Error de sintaxis'}
   return {'message': message}
+
+@app.post('/open/{type}/')
+async def send_file_contents(type:str, body:open_body):
+  data = ''
+  if type == 'server':
+    data = local.open_file(body.name)
+  else:
+    data = cloud.open_file(body.name)
+  return {'content': data}
 
 @app.post('/backup/server/')
 async def backup_to_server(body: backup_body):
