@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from os import makedirs
 from backend.parser.parser import parser
+from backend.commands.local import create
+from config import files_dir
 
 app = FastAPI()
 class parser_call_body(BaseModel):
@@ -19,6 +22,13 @@ async def interpret(body: parser_call_body):
     return {'message': 'Error de sintaxis'}
   return {'message': message}
 
-@app.post('/backup/server')
+@app.post('/backup/server/')
 async def backup_to_server(body: backup_body):
-  return {'message': 'Faltar implementar este comando'}
+  path = files_dir + body.path
+  if body.type == 'dir':
+    makedirs(path, exist_ok=True)
+    return {'message': 'Carpeta creada'}
+  makedirs(path, exist_ok=True)
+  with open(path+body.name, 'w') as file:
+    file.write(body.body)
+    return {'message': 'Archivo creado'}
