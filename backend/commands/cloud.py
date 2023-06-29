@@ -46,7 +46,7 @@ def renombrar(path:str, new_name:str) -> str:
   old_name = s3.Object(bucket_name, path)
   new = s3.Object(bucket_name, new_name)
   new.copy_from(
-      CopySource=f'{bucket_name}/{old_name}'
+      CopySource=f'{bucket_name}/{old_name.key}'
   )
   old_name.delete()
 
