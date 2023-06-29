@@ -178,6 +178,26 @@ def backup_to_own_bucket(name:str) -> str:
         obj.put(Body=content)
   return 'Backup realizado'
 
+def recover_server_files(name:str) -> str:
+  backup_path = config.files_dir+'/'+name
+  for dir in os.walk(backup_path):
+    file_path = dir[0].removeprefix(backup_path)
+    if file_path == '': continue
+    if len(dir[2]) == 0:
+      data = {'type': 'dir', 'path':file_path}
+      yield data
+      continue
+    for file in dir[2]:
+      content = open(os.path.join(dir[0], file))
+      data = {
+        'type': 'dir',
+        'path':file_path+'/',
+        'name': file,
+        'body': content.read()
+      }
+      content.close()
+      yield data
+
 def splitPathEnding(path:str) -> list:
   'Devuelve la ruta del archivo y el nombre del archivo por separado'
   pathSplit = path.rsplit('/', 1)

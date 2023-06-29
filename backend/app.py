@@ -15,7 +15,7 @@ class backup_body(BaseModel):
   name: str | None
   body: str | None
 
-class open_body(BaseModel):
+class name_body(BaseModel):
   name: str
 
 @app.post('/interpret/')
@@ -26,7 +26,7 @@ async def interpret(body: parser_call_body):
   return {'message': message}
 
 @app.post('/open/{type}/')
-async def send_file_contents(type:str, body:open_body):
+async def send_file_contents(type:str, body:name_body):
   data = ''
   if type == 'server':
     data = local.open_file(body.name)
@@ -44,3 +44,8 @@ async def backup_to_server(body: backup_body):
   with open(path+body.name, 'w') as file:
     file.write(body.body)
     return {'message': 'Archivo creado'}
+
+@app.post('/recovery/server/')
+async def recover_server_files(body:name_body):
+  file_tree = local.recover_server_files(body.name)
+  return {'list': file_tree}
