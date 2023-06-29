@@ -60,7 +60,7 @@ def rename(path:str, name:str) -> str:
       path="/".join(separar)
       new_name = path + "/"+name
       break
-  renombrar(bucket_name, path, new_name)
+  renombrar(path, new_name)
   return 'Renombrado Exitosamente'
 
 def delete_all() -> str:
