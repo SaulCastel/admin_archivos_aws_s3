@@ -75,6 +75,8 @@ def local_copy(source, dest) -> str:
 def copy_to_bucket(source, dest) -> str:
   path_split = splitPathEnding(dest)
   local_path = config.basedir + source
+  if os.path.isdir(local_path):
+    return 'Solo implementado para archivos'
   with open(local_path) as local_file:
     body = local_file(local_path, 'r')
     message = cloud.create(path=path_split[0], name=path_split[1], body=body)
@@ -178,24 +180,8 @@ def backup_to_own_bucket(name:str) -> str:
         obj.put(Body=content)
   return 'Backup realizado'
 
-def recover_server_files(name:str) -> str:
-  backup_path = config.files_dir+'/'+name
-  for dir in os.walk(backup_path):
-    file_path = dir[0].removeprefix(backup_path)
-    if len(dir[2]) == 0:
-      data = {'type': 'dir', 'path':file_path+'/'}
-      yield data
-      continue
-    for file in dir[2]:
-      content = open(os.path.join(dir[0], file))
-      data = {
-        'type': 'file',
-        'path':file_path+'/',
-        'name': file,
-        'body': content.read()
-      }
-      content.close()
-      yield data
+def recover_server_files(name:str, ip=None, port=None) -> str:
+  return 'Falta implementar este comando'
 
 def splitPathEnding(path:str) -> list:
   'Devuelve la ruta del archivo y el nombre del archivo por separado'
