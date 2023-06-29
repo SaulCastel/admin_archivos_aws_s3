@@ -217,13 +217,12 @@ def backup_to_own_server(name:str) -> str:
       separar =  objeto.key.split("/")
       separar[0]=name
       ruta_objeto ="/".join(separar)
-      ruta_local = os.path.join("Archivos/", ruta_objeto)
+      ruta_local = os.path.join(files_dir, ruta_objeto)
       ruta_local =ruta_local.replace("\\","/")
       # Crear el directorio local si no existe
       os.makedirs(os.path.dirname(ruta_local), exist_ok=True)
       # Descargar el objeto desde S3 al directorio local
       bucket.download_file(objeto.key, ruta_local)
-      return (f"Objeto descargado exitosamente: {ruta_local}")
     return "Descarga del bucket completada exitosamente"
   except Exception as e:
     return "Error al descargar el bucket:" + str(e)
