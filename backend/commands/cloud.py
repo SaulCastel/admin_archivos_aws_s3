@@ -64,9 +64,7 @@ def rename(path:str, name:str) -> str:
   return 'Renombrado Exitosamente'
 
 def delete_all() -> str:
-  for obj in bucket.objects.all():
-    if obj.key == 'miausuarios.txt':
-      continue
+  for obj in bucket.objects.filter(Prefix=bucket_basedir):
     s3.Object(bucket_name, obj.key).delete()
   object = s3.Object(bucket_name, bucket_basedir+'/vacio.txt')
   object.put(Body=''.encode())
@@ -219,6 +217,8 @@ def backup_to_own_server(name:str) -> str:
   except Exception as e:
     return ("Error al descargar el bucket:", str(e))
 
+def recover_bucket_files(name:str, ip=None, port=None) -> str:
+  return 'Falta implementar este comando'
 
 def open_file(name, ip=None, port=None) -> str:
   if ip and port:

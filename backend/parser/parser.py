@@ -197,7 +197,13 @@ def p_backup(p):
 
 def p_recovery(p):
   'recovery : RECOVERY params'
-  pass
+  commands = {
+    'server-server': local.recover_server_files,
+    'server-bucket': local.recover_server_files,
+    'bucket-server': cloud.recover_bucket_files,
+    'bucket-bucket': cloud.recover_bucket_files
+  }
+  p[0] = exec_api_command(commands, p[2])
 
 def p_delete_all(p):
   'delete_all : DELETE_ALL params'

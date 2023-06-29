@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from os import makedirs
 from backend.parser.parser import parser
 from backend.commands import cloud, local
-from config import files_dir
+import config
 
 app = FastAPI()
 class parser_call_body(BaseModel):
@@ -36,7 +36,7 @@ async def send_file_contents(type:str, body:name_body):
 
 @app.post('/backup/server/')
 async def backup_to_server(body: backup_body):
-  path = files_dir + body.path
+  path = config.files_dir + body.path
   if body.type == 'dir':
     makedirs(path, exist_ok=True)
     return {'message': 'Carpeta creada'}
@@ -45,7 +45,25 @@ async def backup_to_server(body: backup_body):
     file.write(body.body)
     return {'message': 'Archivo creado'}
 
+def send_files_info():
+  backup_path = config.files_dir+'/'+name
+  for dir in os.walk(backup_path):
+    file_path = dir[0].removeprefix(backup_path)
+    if len(dir[2]) == 0:
+      data = {'type': 'dir', 'path':file_path+'/'}
+      yield data
+      continue
+    for file in dir[2]:
+      content = open(os.path.join(dir[0], file))
+      data = {
+        'type': 'file',
+        'path':file_path+'/',
+        'name': file,
+        'body': content.read()
+      }
+      content.close()
+      yield data
+
 @app.post('/recovery/server/')
 async def recover_server_files(body:name_body):
-  file_tree = local.recover_server_files(body.name)
-  return {'list': file_tree}
+  return {'list': send_files_info()}
