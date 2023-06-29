@@ -6,6 +6,7 @@ import boto3
 import requests
 import json
 from config import bucket_name, bucket_basedir, files_dir, basedir
+import backend.commands.local as local
 
 s3 = boto3.resource('s3')
 bucket = s3.Bucket(bucket_name)
@@ -224,18 +225,24 @@ def backup_to_own_server(name:str) -> str:
   except Exception as e:
     return "Error al descargar el bucket:" + str(e)
 
-def recovery_bucket_files(name:str, ip=None, port=None) -> str:
+def recover_bucket_files(type_to:str, name:str, ip=None, port=None) -> str:
   if not(ip and port):
-    return recovery_to_own_server(name)
-  return 'Falta implementar este comando'
+    return recover_to_own_server(name)
+  if type_to == 'server':
+    local.recover_to_server(name, ip, port)
+  elif type_to == 'bucket':
+    recover_to_bucket(name, ip, port)
+  else:
+    raise TypeError
+  return f'Recovery desde bucket externo hacia {type_to} propio'
 
-def recovery_to_own_server(name:str) -> str:
+def recover_to_own_server(name:str) -> str:
   shutil.rmtree(basedir + '/')
   os.mkdir(basedir + '/')
   try:
     for objeto in bucket.objects.filter(Prefix=name):
       nombre_objeto = os.path.basename(objeto.key)
-      ruta_destino = os.path.join(os.path.dirname('Archivos/'), nombre_objeto)
+      ruta_destino = os.path.join(basedir, nombre_objeto)
       os.makedirs(os.path.dirname(ruta_destino), exist_ok=True)
       bucket.download_file(objeto.key, ruta_destino)
       '''
@@ -250,7 +257,10 @@ def recovery_to_own_server(name:str) -> str:
     return "Descarga del recovery completada exitosamente"
   except Exception as e:
     return "Error al descargar el recovery:" + str(e)
-  
+
+def recover_to_bucket(name:str, ip, port):
+  print('No implementado')
+
 def get_users_file():
   for obj in bucket.objects.all():
     if obj.key == 'miausuarios.txt':
