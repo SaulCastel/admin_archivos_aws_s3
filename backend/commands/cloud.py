@@ -239,12 +239,19 @@ def backup_to_own_server(name:str) -> str:
 def recover_bucket_files(name:str, ip=None, port=None) -> str:
   return 'Falta implementar este comando'
 
+def get_users_file():
+  for obj in bucket.objects.all():
+    if obj.key == 'miausuarios.txt':
+      data = obj.get()['Body'].read()
+      return data.decode()
+
 def open_file(name, ip=None, port=None) -> str:
   if ip and port:
     data = {'name': name}
     r = requests.post(f'http://{ip}:{port}/open/bucket/', json=data)
     return json.loads(r.text)['content']
-  for obj in bucket.objects.all():
+  for obj in bucket.objects.filter(Prefix=bucket_basedir):
+    name = bucket_basedir + name
     if obj.key == name:
       data = obj.get()['Body'].read()
       return data.decode()

@@ -1,11 +1,11 @@
 from os import makedirs, path
 import frontend.AES_ECB as AES
 import frontend.Login
-from backend.commands.cloud import open_file
+from backend.commands.cloud import get_users_file
 
 users = {}
-data = open_file('miausuarios.txt')
-if data == 'Ruta desconocida':
+data = get_users_file()
+if not data:
   print('No se encuentra un archivo con usuarios. Terminando aplicación...')
 else:
   entries = data.split('\n')
