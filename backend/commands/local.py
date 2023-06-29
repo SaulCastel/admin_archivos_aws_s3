@@ -4,7 +4,7 @@ import requests
 import boto3
 import json
 import config
-from . import cloud
+import backend.commands.cloud as cloud
 import re
 
 def create(path, name, body) -> str:
@@ -180,7 +180,36 @@ def backup_to_own_bucket(name:str) -> str:
         obj.put(Body=content)
   return 'Backup realizado'
 
-def recover_server_files(name:str, ip=None, port=None) -> str:
+def recover_server_files(type_to:str, name:str, ip=None, port=None) -> str:
+  if not(ip and port):
+    return recover_to_own_bucket(name)
+  if type_to == 'server':
+    return recover_to_server()
+  elif type_to == 'bucket':
+    pass
+  else:
+    raise TypeError
+  return f'Recovery desde server externo hacia {type_to} propio'
+
+def recover_to_own_bucket(name:str) -> str:
+  cloud.delete_all()
+  s3 = boto3.resource('s3')
+  dir_path = os.path.join(os.path.join(config.files_dir, name))
+  for dir in os.walk(dir_path):
+    path = dir[0].removeprefix(dir_path)
+    if not dir[2]:
+      key = f'{path}/'
+      print(key)
+      s3.Object(config.bucket_name, key).put(Body=b'')
+      continue
+    for file in dir[2]:
+      key = f'{path}/{file}'
+      print(key)
+      with open(os.path.join(dir[0], file), 'rb') as content:
+        s3.Object(config.bucket_name, key).put(Body=content)
+  return 'Recovery desde server propio hacia bucket propio realizado'
+
+def recover_to_server(name:str) -> str:
   return 'Falta implementar este comando'
 
 def splitPathEnding(path:str) -> list:

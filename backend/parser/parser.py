@@ -111,7 +111,7 @@ def exec_double_type_command(commands:dict, params:dict) -> str:
     except TypeError:
       return 'Parametro(s) invalido(s)'
 
-def exec_api_command(commands:dict, params) -> str:
+def exec_backup_operations(commands:dict, params) -> str:
   try:
     type_from = params.pop('type_from')
     type_to = params.pop('type_to')
@@ -124,15 +124,15 @@ def exec_api_command(commands:dict, params) -> str:
       if type_from == 'server' and type_to == 'server':
         if not(ip and port):
           return 'Se necesita ip y puerto para operacion con tipos iguales'
-        return commands['server-server']('server', **params)
+        return commands['server-server'](type_to, **params)
       if type_from == 'bucket' and type_to == 'bucket':
         if not(ip and port):
           return 'Se necesita ip y puerto para operacion con tipos iguales'
-        return commands['bucket-bucket']('bucket', **params)
+        return commands['bucket-bucket'](type_to, **params)
       elif type_from == 'server' and type_to == 'bucket':
-        return commands['server-bucket']('bucket',**params)
+        return commands['server-bucket'](type_to, **params)
       else:
-        return commands['bucket-server']('server', **params)
+        return commands['bucket-server'](type_to, **params)
     except TypeError:
       return 'Parametro(s) invalido(s)'
 
@@ -193,7 +193,7 @@ def p_backup(p):
     'bucket-server': cloud.backup_bucket_files,
     'bucket-bucket': cloud.backup_bucket_files
   }
-  p[0] = exec_api_command(commands, p[2])
+  p[0] = exec_backup_operations(commands, p[2])
 
 def p_recovery(p):
   'recovery : RECOVERY params'
@@ -203,7 +203,7 @@ def p_recovery(p):
     'bucket-server': cloud.recover_bucket_files,
     'bucket-bucket': cloud.recover_bucket_files
   }
-  p[0] = exec_api_command(commands, p[2])
+  p[0] = exec_backup_operations(commands, p[2])
 
 def p_delete_all(p):
   'delete_all : DELETE_ALL params'
