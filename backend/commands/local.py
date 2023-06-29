@@ -184,9 +184,9 @@ def recover_server_files(type_to:str, name:str, ip=None, port=None) -> str:
   if not(ip and port):
     return recover_to_own_bucket(name)
   if type_to == 'server':
-    return recover_to_server()
+    recover_to_server(name, ip, port)
   elif type_to == 'bucket':
-    pass
+    cloud.recover_to_bucket(name, ip, port)
   else:
     raise TypeError
   return f'Recovery desde server externo hacia {type_to} propio'
@@ -199,18 +199,23 @@ def recover_to_own_bucket(name:str) -> str:
     path = dir[0].removeprefix(dir_path)
     if not dir[2]:
       key = f'{path}/'
-      print(key)
       s3.Object(config.bucket_name, key).put(Body=b'')
       continue
     for file in dir[2]:
       key = f'{path}/{file}'
-      print(key)
       with open(os.path.join(dir[0], file), 'rb') as content:
         s3.Object(config.bucket_name, key).put(Body=content)
   return 'Recovery desde server propio hacia bucket propio realizado'
 
-def recover_to_server(name:str) -> str:
-  return 'Falta implementar este comando'
+def recover_to_server(name:str, ip, port):
+  r = requests.post(f'http://{ip}:{port}/recovery/server/', json={'name': name})
+  file_tree = json.loads(r.text)['list']
+  delete_all()
+  for file in file_tree:
+    if file['type'] == 'file':
+      create(file['path'], file['name'], file['body'])
+    else:
+      os.makedirs(file['path'], exist_ok=True)
 
 def splitPathEnding(path:str) -> list:
   'Devuelve la ruta del archivo y el nombre del archivo por separado'
