@@ -228,7 +228,7 @@ def backup_to_own_server(name:str) -> str:
   except Exception as e:
     return "Error al descargar el bucket:" + str(e)
 
-def recover_bucket_files(name:str, ip=None, port=None) -> str:
+def recover_bucket_files(type_to:str, name:str, ip=None, port=None) -> str:
   if not(ip and port):
     return recover_to_own_server(name)
   return 'Falta implementar este comando'
