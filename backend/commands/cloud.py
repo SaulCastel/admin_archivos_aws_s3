@@ -4,7 +4,7 @@ from urllib import request
 import boto3
 import requests
 import json
-from config import bucket_name, bucket_basedir, dir, basedir
+from config import bucket_name, bucket_basedir, files_dir
 
 s3 = boto3.resource('s3')
 bucket = s3.Bucket(bucket_name)
@@ -107,24 +107,23 @@ def cloud_copy(source, dest) -> str:
 
 def copy_to_server(source, dest) -> str:
   source1 = bucket_basedir+source
-  dest1 = bucket_basedir+dest
+  dest1 = files_dir+dest
   try:
         for objeto in bucket.objects.filter(Prefix=source1):
             # Obtener el nombre del objeto sin la ruta completa
-            if source.endswith(".txt"):
+            if source1.endswith(".txt"):
                 nombre_objeto = os.path.basename(objeto.key)
-                destino = dest1
-                ruta_destino = os.path.join(destino, nombre_objeto)
+                ruta_destino = os.path.join(dest1, nombre_objeto)
                 os.makedirs(os.path.dirname(ruta_destino), exist_ok=True)
                 # Descargar el objeto desde S3 a la ruta local
                 bucket.download_file(objeto.key, ruta_destino)
-                print(f"Objeto transferido exitosamente: {ruta_destino}")
+                print(f"Objeto copiado exitosamente: {ruta_destino}")
             else:
                 return "No se pudo implementar en carpetas"
 
         return "Copia completada exitosamente"
   except Exception as e:
-        return "Error al transferir los objetos:"+ str(e)
+        return "Error al copiar los objetos:"+ str(e)
 
 def cloud_transfer(source, dest) -> str:
   source1 = bucket_basedir+source
@@ -171,7 +170,27 @@ def cloud_transfer(source, dest) -> str:
         return "Error al copiar la carpeta:"+ str(e)
 
 def transfer_to_server(source, dest) -> str:
-  return 'Falta implementar este comando'
+  source1 = bucket_basedir+source
+  dest1 = files_dir+dest
+  try:
+        for objeto in bucket.objects.filter(Prefix=source1):
+            # Obtener el nombre del objeto sin la ruta completa
+            if source1.endswith(".txt"):
+                nombre_objeto = os.path.basename(objeto.key)
+                ruta_destino = os.path.join(dest1, nombre_objeto)
+                os.makedirs(os.path.dirname(ruta_destino), exist_ok=True)
+                # Descargar el objeto desde S3 a la ruta local
+                bucket.download_file(objeto.key, ruta_destino)
+                print(f"Objeto copiado exitosamente: {ruta_destino}")
+                eliminar = s3.Object(bucket_name, objeto.key)
+                eliminar.delete()
+            else:
+                return "No se pudo implementar en carpetas"
+
+        return "Transferencia completada exitosamente"
+  except Exception as e:
+        return "Error al Transferir los objetos:"+ str(e)
+
 
 def backup_bucket_files(type_to:str, name, ip=None, port=None) -> str:
   if not(ip and port):
