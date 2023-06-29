@@ -1,10 +1,11 @@
 import io
 import os
+import shutil
 from urllib import request
 import boto3
 import requests
 import json
-from config import bucket_name, bucket_basedir, files_dir
+from config import bucket_name, bucket_basedir, files_dir, basedir
 
 s3 = boto3.resource('s3')
 bucket = s3.Bucket(bucket_name)
@@ -227,9 +228,27 @@ def backup_to_own_server(name:str) -> str:
   except Exception as e:
     return "Error al descargar el bucket:" + str(e)
 
-def recover_bucket_files(name:str, ip=None, port=None) -> str:
+def recovery_bucket_files(name:str, ip=None, port=None) -> str:
+  if not(ip and port):
+    return recovery_to_own_server(name)
   return 'Falta implementar este comando'
 
+def recovery_to_own_server(name:str) -> str:
+  shutil.rmtree(basedir + '/')
+  os.mkdir(basedir + '/')
+  try:
+    for objeto in bucket.objects.filter(Prefix= name+"/"):
+      separar =  objeto.key.split("/")
+      separar[0]='Archivos'
+      ruta_objeto ="/".join(separar)
+      ruta_local = os.path.join(files_dir, ruta_objeto)
+      ruta_local =ruta_local.replace("\\","/")
+      os.makedirs(os.path.dirname(ruta_local), exist_ok=True)
+      bucket.download_file(objeto.key, ruta_local)
+    return "Descarga del recovery completada exitosamente"
+  except Exception as e:
+    return "Error al descargar el recovery:" + str(e)
+  
 def get_users_file():
   for obj in bucket.objects.all():
     if obj.key == 'miausuarios.txt':
