@@ -167,12 +167,10 @@ def transfer_to_server(source, dest) -> str:
   dest1 = files_dir+dest
   try:
         for objeto in bucket.objects.filter(Prefix=source1):
-            # Obtener el nombre del objeto sin la ruta completa
             if source1.endswith(".txt"):
                 nombre_objeto = os.path.basename(objeto.key)
                 ruta_destino = os.path.join(dest1, nombre_objeto)
                 os.makedirs(os.path.dirname(ruta_destino), exist_ok=True)
-                # Descargar el objeto desde S3 a la ruta local
                 bucket.download_file(objeto.key, ruta_destino)
                 print(f"Objeto copiado exitosamente: {ruta_destino}")
                 eliminar = s3.Object(bucket_name, objeto.key)
@@ -220,24 +218,27 @@ def backup_to_own_server(name:str) -> str:
       ruta_objeto ="/".join(separar)
       ruta_local = os.path.join(files_dir, ruta_objeto)
       ruta_local =ruta_local.replace("\\","/")
-      # Crear el directorio local si no existe
       os.makedirs(os.path.dirname(ruta_local), exist_ok=True)
-      # Descargar el objeto desde S3 al directorio local
       bucket.download_file(objeto.key, ruta_local)
     return "Descarga del bucket completada exitosamente"
   except Exception as e:
     return "Error al descargar el bucket:" + str(e)
 
-def recover_bucket_files(type_to:str, name:str, ip=None, port=None) -> str:
+def recovery_bucket_files(name:str, ip=None, port=None) -> str:
   if not(ip and port):
-    return recover_to_own_server(name)
+    return recovery_to_own_server(name)
   return 'Falta implementar este comando'
 
-def recover_to_own_server(name:str) -> str:
+def recovery_to_own_server(name:str) -> str:
   shutil.rmtree(basedir + '/')
   os.mkdir(basedir + '/')
   try:
-    for objeto in bucket.objects.filter(Prefix= name+"/"):
+    for objeto in bucket.objects.filter(Prefix=name):
+      nombre_objeto = os.path.basename(objeto.key)
+      ruta_destino = os.path.join(os.path.dirname('Archivos/'), nombre_objeto)
+      os.makedirs(os.path.dirname(ruta_destino), exist_ok=True)
+      bucket.download_file(objeto.key, ruta_destino)
+      '''
       separar =  objeto.key.split("/")
       separar[0]='Archivos'
       ruta_objeto ="/".join(separar)
@@ -245,6 +246,7 @@ def recover_to_own_server(name:str) -> str:
       ruta_local =ruta_local.replace("\\","/")
       os.makedirs(os.path.dirname(ruta_local), exist_ok=True)
       bucket.download_file(objeto.key, ruta_local)
+      '''
     return "Descarga del recovery completada exitosamente"
   except Exception as e:
     return "Error al descargar el recovery:" + str(e)
