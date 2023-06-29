@@ -43,8 +43,8 @@ def modify(path:str, body:str) -> str:
   return 'El archivo y/o Carpeta no Existe'
 
 def renombrar(path:str, new_name:str) -> str:
-  old_name = s3.object(bucket_name, path)
-  new = s3.object(bucket_name, new_name)
+  old_name = s3.Object(bucket_name, path)
+  new = s3.Object(bucket_name, new_name)
   new.copy_from(
       CopySource=f'{bucket_name}/{old_name}'
   )
