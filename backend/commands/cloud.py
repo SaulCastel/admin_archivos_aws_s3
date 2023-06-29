@@ -89,9 +89,9 @@ def cloud_copy(source, dest) -> str:
       }
 
       s3.Object(objeto_destino['Bucket'], objeto_destino['Key']).copy(objeto_origen)
-      return ("Archivo Copiado exitosamente")
+      return "Archivo Copiado exitosamente"
     except Exception as e:
-            return("Error al copiar el archivo:", str(e))
+            return "Error al copiar el archivo:"+ str(e)
   else:
         obtener = source.split("/")
         obtener.pop()
@@ -101,28 +101,30 @@ def cloud_copy(source, dest) -> str:
                 destino_objeto = objeto.key.replace(source, name, 1)
                 bucket.Object(destino_objeto).copy_from(CopySource={'Bucket': bucket_name, 'Key': objeto.key})
                 print(f"Objeto copiado exitosamente: {destino_objeto}")
-            return("Carpeta Copiada exitosamente")
+            return "Carpeta Copiada exitosamente"
         except Exception as e:
-            return ("Error al copiar la carpeta:", str(e))                       
+            return "Error al copiar la carpeta:" + str(e)                     
 
 def copy_to_server(source, dest) -> str:
-  '''
-  source = bucket_basedir+source
-  dest = basedir + dest   
-  if source.endswith('.txt'):
-    obj = s3.Object(bucket_name, source)
-    name = obj.key.removeprefix(source)
-    bucket.download_file(obj.key, dest+name)
-    return 'Copia realizada con exito'
-  for obj in bucket.objects.filter(Prefix=source):
-    name = obj.key.removeprefix(source)
-    if name.endswith('.txt'):
-      bucket.download_file(obj.key, dest+name)
-    else:
-      os.makedirs(dest+name, exist_ok=True)
-  return "Copia realizada con exito"
-  '''
-  return 'Falta implementar este comando'
+  source1 = bucket_basedir+source
+  dest1 = bucket_basedir+dest
+  try:
+        for objeto in bucket.objects.filter(Prefix=source1):
+            # Obtener el nombre del objeto sin la ruta completa
+            if source.endswith(".txt"):
+                nombre_objeto = os.path.basename(objeto.key)
+                destino = dest1
+                ruta_destino = os.path.join(destino, nombre_objeto)
+                os.makedirs(os.path.dirname(ruta_destino), exist_ok=True)
+                # Descargar el objeto desde S3 a la ruta local
+                bucket.download_file(objeto.key, ruta_destino)
+                print(f"Objeto transferido exitosamente: {ruta_destino}")
+            else:
+                return "No se pudo implementar en carpetas"
+
+        return "Copia completada exitosamente"
+  except Exception as e:
+        return "Error al transferir los objetos:"+ str(e)
 
 def cloud_transfer(source, dest) -> str:
   source1 = bucket_basedir+source
@@ -148,7 +150,7 @@ def cloud_transfer(source, dest) -> str:
       create = s3.Object(bucket_name, reponer)
       create.put(Body="".encode())
     except Exception as e:
-      print("Error al copiar el archivo:", str(e))
+      return "Error al copiar el archivo:" + str(e)
   else:
       obtener = source.split("/")
       obtener.pop()
@@ -162,11 +164,11 @@ def cloud_transfer(source, dest) -> str:
           eliminar =s3.Object(bucket_name,objeto.key)
           eliminar.delete()
           print(f"Objeto Transferido exitosamente: {destino_objeto}")
-        print("Carpeta Transferida exitosamente")
+        return "Carpeta Transferida exitosamente"
         create = s3.Object(bucket_name, reponer)
         create.put(Body="".encode())
       except Exception as e:
-        print("Error al copiar la carpeta:", str(e))
+        return "Error al copiar la carpeta:"+ str(e)
 
 def transfer_to_server(source, dest) -> str:
   return 'Falta implementar este comando'
@@ -211,9 +213,9 @@ def backup_to_own_server(name:str) -> str:
       # Descargar el objeto desde S3 al directorio local
       bucket.download_file(objeto.key, ruta_local)
       return (f"Objeto descargado exitosamente: {ruta_local}")
-    return ("Descarga del bucket completada exitosamente")
+    return "Descarga del bucket completada exitosamente"
   except Exception as e:
-    return ("Error al descargar el bucket:", str(e))
+    return "Error al descargar el bucket:" + str(e)
 
 def recover_bucket_files(name:str, ip=None, port=None) -> str:
   return 'Falta implementar este comando'
