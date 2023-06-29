@@ -228,12 +228,12 @@ def backup_to_own_server(name:str) -> str:
   except Exception as e:
     return "Error al descargar el bucket:" + str(e)
 
-def recovery_bucket_files(name:str, ip=None, port=None) -> str:
+def recover_bucket_files(name:str, ip=None, port=None) -> str:
   if not(ip and port):
-    return recovery_to_own_server(name)
+    return recover_to_own_server(name)
   return 'Falta implementar este comando'
 
-def recovery_to_own_server(name:str) -> str:
+def recover_to_own_server(name:str) -> str:
   shutil.rmtree(basedir + '/')
   os.mkdir(basedir + '/')
   try:
