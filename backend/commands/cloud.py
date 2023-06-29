@@ -42,26 +42,18 @@ def modify(path:str, body:str) -> str:
       return 'Modificado Exitosamente'
   return 'El archivo y/o Carpeta no Existe'
 
-def renombrar(path:str, new_name:str) -> str:
-  old_name = s3.Object(bucket_name, path)
-  new = s3.Object(bucket_name, new_name)
-  new.copy_from(
-      CopySource=f'{bucket_name}/{old_name.key}'
-  )
-  old_name.delete()
+
 
 def rename(path:str, name:str) -> str:
   path1 = bucket_basedir+path
-  new_name = ''
-  for obj in bucket.objects.all():
-    if path1 == obj.key:
-      separar = (path1).split('/')
-      separar.pop()
-      path="/".join(separar)
-      new_name = path + "/"+name
-      break
-  renombrar(path, new_name)
-  return 'Renombrado Exitosamente'
+  try:
+    objeto = s3.Object(bucket_name, path1)
+    ruta_destino = objeto.key.rsplit('/', 1)[0] + '/' + name
+    s3.Object(bucket_name, ruta_destino).copy_from(CopySource={'Bucket': bucket_name, 'Key': objeto.key})
+    objeto.delete()
+    return f"Objeto renombrado exitosamente. Nuevo nombre: {ruta_destino}"
+  except Exception as e:
+    return "Error al renombrar el objeto:" + str(e)
 
 def delete_all() -> str:
   for obj in bucket.objects.filter(Prefix=bucket_basedir):
