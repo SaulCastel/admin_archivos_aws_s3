@@ -44,8 +44,6 @@ def modify(path:str, body:str) -> str:
       return 'Modificado Exitosamente'
   return 'El archivo y/o Carpeta no Existe'
 
-
-
 def rename(path:str, name:str) -> str:
   path1 = bucket_basedir+path
   try:
@@ -64,7 +62,6 @@ def delete_all() -> str:
   object.put(Body=''.encode())
   return 'Bucket Vacio Completamente'
 
-  
 def cloud_copy(source, dest) -> str:
   source1 = bucket_basedir+source
   dest1 = bucket_basedir+dest
@@ -183,7 +180,6 @@ def transfer_to_server(source, dest) -> str:
   except Exception as e:
         return "Error al Transferir los objetos:"+ str(e)
 
-
 def backup_bucket_files(type_to:str, name, ip=None, port=None) -> str:
   if not(ip and port):
     return backup_to_own_server(name)
@@ -259,7 +255,15 @@ def recover_to_own_server(name:str) -> str:
     return "Error al descargar el recovery:" + str(e)
 
 def recover_to_bucket(name:str, ip, port):
-  print('No implementado')
+  r = requests.post(f'http://{ip}:{port}/recovery/server/', json={'name': name})
+  files = json.loads(r.text)['list']
+  delete_all()
+  for file in files:
+    if file['type'] == 'file':
+      create(file['path'], file['name'], file['body'])
+    else:
+      create(file['path'], file['name'],"")
+  return "Recovery Realizado"
 
 def get_users_file():
   for obj in bucket.objects.all():
