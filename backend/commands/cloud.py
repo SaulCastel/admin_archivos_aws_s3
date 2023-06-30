@@ -236,13 +236,13 @@ def recover_to_own_server(name:str) -> str:
     for objeto in bucket.objects.filter(Prefix=name):
         if objeto.key.endswith(".txt"):
             nombre_objeto = objeto.key.removeprefix(name)
-            ruta_destino = os.path.join(basedir, nombre_objeto)
+            ruta_destino = basedir+nombre_objeto
             ruta_destino =ruta_destino.replace('\\','/')
             os.makedirs(os.path.dirname(ruta_destino), exist_ok=True)
             bucket.download_file(objeto.key, ruta_destino)
         else:
             nombre_objeto = os.path.basename(objeto.key)
-            ruta_destino = os.path.join(basedir, nombre_objeto)
+            ruta_destino = basedir+nombre_objeto
             ruta_destino =ruta_destino.replace('\\','/')
             if not os.path.exists(ruta_destino):
                 os.makedirs(os.path.dirname(ruta_destino), exist_ok=True)
