@@ -245,7 +245,7 @@ def recover_to_own_server(name:str) -> str:
             bucket.download_file(objeto.key, ruta_destino)
         else:
             nombre_objeto = os.path.basename(objeto.key)
-            ruta_destino = os.path.join(os.path.dirname('Archivos/'), nombre_objeto)
+            ruta_destino = os.path.join(os.path.dirname(basedir), nombre_objeto)
             ruta_destino =ruta_destino.replace('\\','/')
             if not os.path.exists(ruta_destino):
                 os.makedirs(os.path.dirname(ruta_destino), exist_ok=True)
