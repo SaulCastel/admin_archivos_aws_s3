@@ -146,19 +146,17 @@ def cloud_transfer(source, dest) -> str:
       obtener.pop()
       name = dest+obtener[len(obtener)-1]+"/"
       reponer = "/".join(obtener[:-1]) + "/"
-      print(reponer)
       try:
         for objeto in bucket.objects.filter(Prefix=source):
           destino_objeto = objeto.key.replace(source, name, 1)
           bucket.Object(destino_objeto).copy_from(CopySource={'Bucket': bucket_name, 'Key': objeto.key})
           eliminar =s3.Object(bucket_name,objeto.key)
           eliminar.delete()
-          print(f"Objeto Transferido exitosamente: {destino_objeto}")
         return "Carpeta Transferida exitosamente"
         create = s3.Object(bucket_name, reponer)
         create.put(Body="".encode())
       except Exception as e:
-        return "Error al copiar la carpeta:"+ str(e)
+        return "Error al Transferir la carpeta:"+ str(e)
 
 def transfer_to_server(source, dest) -> str:
   source1 = bucket_basedir+source
@@ -170,7 +168,6 @@ def transfer_to_server(source, dest) -> str:
                 ruta_destino = os.path.join(dest1, nombre_objeto)
                 os.makedirs(os.path.dirname(ruta_destino), exist_ok=True)
                 bucket.download_file(objeto.key, ruta_destino)
-                print(f"Objeto copiado exitosamente: {ruta_destino}")
                 eliminar = s3.Object(bucket_name, objeto.key)
                 eliminar.delete()
             else:
