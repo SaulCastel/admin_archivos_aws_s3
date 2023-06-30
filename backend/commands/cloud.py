@@ -162,7 +162,7 @@ def cloud_transfer(source, dest) -> str:
 
 def transfer_to_server(source, dest) -> str:
   source1 = bucket_basedir+source
-  dest1 = files_dir+dest
+  dest1 = basedir+dest
   try:
         for objeto in bucket.objects.filter(Prefix=source1):
             if source1.endswith(".txt"):
@@ -180,7 +180,7 @@ def transfer_to_server(source, dest) -> str:
   except Exception as e:
         return "Error al Transferir los objetos:"+ str(e)
 
-def backup_bucket_files(type_to:str, name, ip=None, port=None) -> str:
+def backup_bucket_files(type_from:str, type_to:str, name, ip=None, port=None) -> str:
   if not(ip and port):
     return backup_to_own_server(name)
   for objeto in bucket.objects.filter(Prefix='Archivos/'):
@@ -221,13 +221,13 @@ def backup_to_own_server(name:str) -> str:
   except Exception as e:
     return "Error al descargar el bucket:" + str(e)
 
-def recover_bucket_files(type_to:str, name:str, ip=None, port=None) -> str:
+def recover_bucket_files(type_from:str, type_to:str, name:str, ip=None, port=None) -> str:
   if not(ip and port):
     return recover_to_own_server(name)
   if type_to == 'server':
-    local.recover_to_server(name, ip, port)
+    local.recover_to_server(type_from, name, ip, port)
   elif type_to == 'bucket':
-    recover_to_bucket(name, ip, port)
+    recover_to_bucket(type_from, name, ip, port)
   else:
     raise TypeError
   return f'Recovery desde bucket externo hacia {type_to} propio'
@@ -254,8 +254,8 @@ def recover_to_own_server(name:str) -> str:
   except Exception as e:
     return "Error al descargar el recovery:" + str(e)
 
-def recover_to_bucket(name:str, ip, port):
-  r = requests.post(f'http://{ip}:{port}/recovery/server/', json={'name': name})
+def recover_to_bucket(type_from:str, name:str, ip, port):
+  r = requests.post(f'http://{ip}:{port}/recovery/{type_from}/', json={'name': name})
   files = json.loads(r.text)['list']
   delete_all()
   for file in files:
@@ -266,6 +266,32 @@ def recover_to_bucket(name:str, ip, port):
     else:
       create(file['path'], file['name'],"")
   return "Recovery Realizado"
+
+def send_files_info(name:str) -> list:
+  backup_path = name+'/'
+  for objeto in bucket.objects.filter(Prefix=backup_path):
+    data = {}
+    if objeto.key.endswith(".txt"):
+      separar = objeto.key.split("/")
+      separar[0] = name
+      s3_object = s3.Object(bucket_name, objeto.key)
+      with io.BytesIO() as f:
+        s3_object.download_fileobj(f)
+        f.seek(0)
+        data = {
+          'type' : 'file',
+          'path' : '/'+"/".join(separar[:-1])+"/",
+          'name' : separar[len(separar)-1],
+          'body' : f.read().decode()
+        }
+    else:
+      path = objeto.key.removeprefix(backup_path)
+      if path == '': continue
+      data = {
+        'type': 'dir',
+        'path': path+'/'
+      }
+    yield data
 
 def get_users_file():
   for obj in bucket.objects.all():

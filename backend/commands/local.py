@@ -73,13 +73,24 @@ def local_copy(source, dest) -> str:
     return 'Destino no puede ser el mismo directorio'
 
 def copy_to_bucket(source, dest) -> str:
-  path_split = splitPathEnding(dest)
+  path_split = splitPathEnding(source)
   local_path = config.basedir + source
+  s3 = boto3.resource('s3')
   if os.path.isdir(local_path):
-    return 'Solo implementado para archivos'
+    for dir in os.walk(local_path):
+      path = dir[0].removeprefix(local_path)
+      key = config.bucket_basedir+dest+path.removeprefix('/')
+      if not dir[2]:
+        s3.Object(config.bucket_basedir, key).put(Body=b'')
+        continue
+      for file in dir[2]:
+        with open(os.path.join(dir[0], file)) as local_file:
+          body = local_file.read()
+          cloud.create(path=path_split[0], name=path_split[1], body=body)
+    return 'Directorio copiado exitosamente'
   with open(local_path) as local_file:
-    body = local_file(local_path, 'r')
-    message = cloud.create(path=path_split[0], name=path_split[1], body=body)
+    body = local_file.read()
+    message = cloud.create(path=dest, name=path_split[1], body=body)
     if message == 'El archivo ya existe':
       return 'Archivo con el mismo nombre ya existe en bucket'
   return 'Archivo copiado exitosamente'
@@ -112,7 +123,18 @@ def local_transfer(source, dest) -> str:
   return 'Ruta renombrada y transferida exitosamente'
 
 def transfer_to_bucket(source, dest) -> str:
-  return 'Falta implementar este comando'
+  search_key = config.bucket_basedir + dest
+  for obj in cloud.bucket.objects.all():
+    if obj.key == search_key or search_key in obj.key: break
+  else:
+    boto3.resource('s3').Object(config.bucket_name, search_key).put(Body=b'')
+  copy_to_bucket(source, dest)
+  local_path = config.basedir+source
+  if os.path.isdir(local_path):
+    shutil.rmtree(local_path) 
+    return 'Ruta transferida exitosamente'
+  os.remove(local_path)
+  return 'Ruta transferida exitosamente'
 
 def modify(path:str, body:str) -> str:
   path = config.basedir + path
@@ -143,7 +165,7 @@ def rename(path:str, name:str) -> str:
   except FileExistsError:
     return 'Ruta especificada ya existe'
 
-def backup_server_files(type_to:str, name, ip=None, port=None) -> str:
+def backup_server_files(type_from:str, type_to:str, name, ip=None, port=None) -> str:
   if not(ip and port):
     return backup_to_own_bucket(name)
   if (ip and not port) or (port and not ip):
@@ -180,13 +202,13 @@ def backup_to_own_bucket(name:str) -> str:
         obj.put(Body=content)
   return 'Backup realizado'
 
-def recover_server_files(type_to:str, name:str, ip=None, port=None) -> str:
+def recover_server_files(type_from:str, type_to:str, name:str, ip=None, port=None) -> str:
   if not(ip and port):
     return recover_to_own_bucket(name)
   if type_to == 'server':
-    recover_to_server(name, ip, port)
+    recover_to_server(type_from, name, ip, port)
   elif type_to == 'bucket':
-    cloud.recover_to_bucket(name, ip, port)
+    cloud.recover_to_bucket(type_from, name, ip, port)
   else:
     raise TypeError
   return f'Recovery desde server externo hacia {type_to} propio'
@@ -207,8 +229,8 @@ def recover_to_own_bucket(name:str) -> str:
         s3.Object(config.bucket_name, key).put(Body=content)
   return 'Recovery desde server propio hacia bucket propio realizado'
 
-def recover_to_server(name:str, ip, port):
-  r = requests.post(f'http://{ip}:{port}/recovery/server/', json={'name': name})
+def recover_to_server(type_from:str, name:str, ip, port):
+  r = requests.post(f'http://{ip}:{port}/recovery/{type_from}/', json={'name': name})
   file_tree = json.loads(r.text)['list']
   delete_all()
   for file in file_tree:
@@ -217,8 +239,28 @@ def recover_to_server(name:str, ip, port):
     else:
       os.makedirs(file['path'], exist_ok=True)
 
+def send_files_info(name:str) -> list:
+  backup_path = config.files_dir+'/'+name
+  for dir in os.walk(backup_path):
+    file_path = dir[0].removeprefix(backup_path)
+    if len(dir[2]) == 0:
+      data = {'type': 'dir', 'path':file_path+'/'}
+      yield data
+      continue
+    for file in dir[2]:
+      content = open(os.path.join(dir[0], file))
+      data = {
+        'type': 'file',
+        'path':file_path+'/',
+        'name': file,
+        'body': content.read()
+      }
+      content.close()
+      yield data
+
 def splitPathEnding(path:str) -> list:
   'Devuelve la ruta del archivo y el nombre del archivo por separado'
+  if path == '/': return ['/', '', 'dir']
   pathSplit = path.rsplit('/', 1)
   if '.' in pathSplit[1]:
     return [pathSplit[0] + '/', pathSplit[1], 'file']

@@ -113,8 +113,8 @@ def exec_double_type_command(commands:dict, params:dict) -> str:
 
 def exec_backup_operations(commands:dict, params) -> str:
   try:
-    type_from = params.pop('type_from')
-    type_to = params.pop('type_to')
+    type_from = params.get('type_from')
+    type_to = params.get('type_to')
   except KeyError:
     return 'Especificacion invalida de tipo'
   else:
@@ -124,15 +124,15 @@ def exec_backup_operations(commands:dict, params) -> str:
       if type_from == 'server' and type_to == 'server':
         if not(ip and port):
           return 'Se necesita ip y puerto para operacion con tipos iguales'
-        return commands['server-server'](type_to, **params)
+        return commands['server-server'](**params)
       if type_from == 'bucket' and type_to == 'bucket':
         if not(ip and port):
           return 'Se necesita ip y puerto para operacion con tipos iguales'
-        return commands['bucket-bucket'](type_to, **params)
+        return commands['bucket-bucket'](**params)
       elif type_from == 'server' and type_to == 'bucket':
-        return commands['server-bucket'](type_to, **params)
+        return commands['server-bucket'](**params)
       else:
-        return commands['bucket-server'](type_to, **params)
+        return commands['bucket-server'](**params)
     except TypeError:
       return 'Parametro(s) invalido(s)'
 
