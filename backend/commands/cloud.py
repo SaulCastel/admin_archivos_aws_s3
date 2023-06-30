@@ -165,7 +165,7 @@ def cloud_transfer(source, dest) -> str:
 
 def transfer_to_server(source, dest) -> str:
   source1 = bucket_basedir+source
-  dest1 = files_dir+dest
+  dest1 = basedir+dest
   try:
         for objeto in bucket.objects.filter(Prefix=source1):
             if source1.endswith(".txt"):

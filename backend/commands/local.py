@@ -73,13 +73,24 @@ def local_copy(source, dest) -> str:
     return 'Destino no puede ser el mismo directorio'
 
 def copy_to_bucket(source, dest) -> str:
-  path_split = splitPathEnding(dest)
+  path_split = splitPathEnding(source)
   local_path = config.basedir + source
+  s3 = boto3.resource('s3')
   if os.path.isdir(local_path):
-    return 'Solo implementado para archivos'
+    for dir in os.walk(local_path):
+      path = dir[0].removeprefix(local_path)
+      key = config.bucket_basedir+dest+path.removeprefix('/')
+      if not dir[2]:
+        s3.Object(config.bucket_basedir, key).put(Body=b'')
+        continue
+      for file in dir[2]:
+        with open(os.path.join(dir[0], file)) as local_file:
+          body = local_file.read()
+          cloud.create(path=path_split[0], name=path_split[1], body=body)
+    return 'Directorio copiado exitosamente'
   with open(local_path) as local_file:
-    body = local_file(local_path, 'r')
-    message = cloud.create(path=path_split[0], name=path_split[1], body=body)
+    body = local_file.read()
+    message = cloud.create(path=dest, name=path_split[1], body=body)
     if message == 'El archivo ya existe':
       return 'Archivo con el mismo nombre ya existe en bucket'
   return 'Archivo copiado exitosamente'
@@ -112,7 +123,18 @@ def local_transfer(source, dest) -> str:
   return 'Ruta renombrada y transferida exitosamente'
 
 def transfer_to_bucket(source, dest) -> str:
-  return 'Falta implementar este comando'
+  search_key = config.bucket_basedir + dest
+  for obj in cloud.bucket.objects.all():
+    if obj.key == search_key or search_key in obj.key: break
+  else:
+    boto3.resource('s3').Object(config.bucket_name, search_key).put(Body=b'')
+  copy_to_bucket(source, dest)
+  local_path = config.basedir+source
+  if os.path.isdir(local_path):
+    shutil.rmtree(local_path) 
+    return 'Ruta transferida exitosamente'
+  os.remove(local_path)
+  return 'Ruta transferida exitosamente'
 
 def modify(path:str, body:str) -> str:
   path = config.basedir + path
@@ -219,6 +241,7 @@ def recover_to_server(name:str, ip, port):
 
 def splitPathEnding(path:str) -> list:
   'Devuelve la ruta del archivo y el nombre del archivo por separado'
+  if path == '/': return ['/', '', 'dir']
   pathSplit = path.rsplit('/', 1)
   if '.' in pathSplit[1]:
     return [pathSplit[0] + '/', pathSplit[1], 'file']
