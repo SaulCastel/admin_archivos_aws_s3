@@ -259,6 +259,8 @@ def recover_to_bucket(name:str, ip, port):
   files = json.loads(r.text)['list']
   delete_all()
   for file in files:
+    file_lista = file['path'].removeprefix(name)
+    file['path'] = f'Archivos/{file_lista}' 
     if file['type'] == 'file':
       create(file['path'], file['name'], file['body'])
     else:
