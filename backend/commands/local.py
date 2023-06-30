@@ -165,7 +165,7 @@ def rename(path:str, name:str) -> str:
   except FileExistsError:
     return 'Ruta especificada ya existe'
 
-def backup_server_files(type_to:str, name, ip=None, port=None) -> str:
+def backup_server_files(type_from:str, type_to:str, name, ip=None, port=None) -> str:
   if not(ip and port):
     return backup_to_own_bucket(name)
   if (ip and not port) or (port and not ip):
@@ -202,13 +202,13 @@ def backup_to_own_bucket(name:str) -> str:
         obj.put(Body=content)
   return 'Backup realizado'
 
-def recover_server_files(type_to:str, name:str, ip=None, port=None) -> str:
+def recover_server_files(type_from:str, type_to:str, name:str, ip=None, port=None) -> str:
   if not(ip and port):
     return recover_to_own_bucket(name)
   if type_to == 'server':
-    recover_to_server(name, ip, port)
+    recover_to_server(type_from, name, ip, port)
   elif type_to == 'bucket':
-    cloud.recover_to_bucket(name, ip, port)
+    cloud.recover_to_bucket(type_from, name, ip, port)
   else:
     raise TypeError
   return f'Recovery desde server externo hacia {type_to} propio'
@@ -229,8 +229,8 @@ def recover_to_own_bucket(name:str) -> str:
         s3.Object(config.bucket_name, key).put(Body=content)
   return 'Recovery desde server propio hacia bucket propio realizado'
 
-def recover_to_server(name:str, ip, port):
-  r = requests.post(f'http://{ip}:{port}/recovery/server/', json={'name': name})
+def recover_to_server(type_from:str, name:str, ip, port):
+  r = requests.post(f'http://{ip}:{port}/recovery/{type_from}/', json={'name': name})
   file_tree = json.loads(r.text)['list']
   delete_all()
   for file in file_tree:
@@ -238,6 +238,25 @@ def recover_to_server(name:str, ip, port):
       create(file['path'], file['name'], file['body'])
     else:
       os.makedirs(file['path'], exist_ok=True)
+
+def send_files_info(name:str) -> list:
+  backup_path = config.files_dir+'/'+name
+  for dir in os.walk(backup_path):
+    file_path = dir[0].removeprefix(backup_path)
+    if len(dir[2]) == 0:
+      data = {'type': 'dir', 'path':file_path+'/'}
+      yield data
+      continue
+    for file in dir[2]:
+      content = open(os.path.join(dir[0], file))
+      data = {
+        'type': 'file',
+        'path':file_path+'/',
+        'name': file,
+        'body': content.read()
+      }
+      content.close()
+      yield data
 
 def splitPathEnding(path:str) -> list:
   'Devuelve la ruta del archivo y el nombre del archivo por separado'

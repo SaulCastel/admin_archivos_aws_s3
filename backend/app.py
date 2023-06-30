@@ -45,25 +45,10 @@ async def backup_to_server(body: backup_body):
     file.write(body.body)
     return {'message': 'Archivo creado'}
 
-def send_files_info():
-  backup_path = config.files_dir+'/'+name
-  for dir in os.walk(backup_path):
-    file_path = dir[0].removeprefix(backup_path)
-    if len(dir[2]) == 0:
-      data = {'type': 'dir', 'path':file_path+'/'}
-      yield data
-      continue
-    for file in dir[2]:
-      content = open(os.path.join(dir[0], file))
-      data = {
-        'type': 'file',
-        'path':file_path+'/',
-        'name': file,
-        'body': content.read()
-      }
-      content.close()
-      yield data
-
 @app.post('/recovery/server/')
 async def recover_server_files(body:name_body):
-  return {'list': send_files_info()}
+  return {'list': local.send_files_info(body.name)}
+
+@app.post('/recovery/bucket/')
+async def recover_server_files(body:name_body):
+  return {'list': cloud.send_files_info(body.name)}
