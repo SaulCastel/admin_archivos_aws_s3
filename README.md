@@ -5,7 +5,7 @@ Funciona desde la consola intregada en la interfaz gráfica y también con los b
 
 ## Tecnologías usadas
 ### Backend (Saul Castellanos)
-- Python con Flask para el servidor
+- Python con FastApi para el servidor
 - Boto3, api para interactuar con AWS
 - PLY, generador de parser para consola integrada
 
